@@ -1,16 +1,25 @@
+const fs = require('fs')
+const https = require ('https')
 const express = require('express')
 const socketIO = require('socket.io')
 const cors = require('cors')
 const app = express()
 const port = 4000
+const privateKey  = fs.readFileSync('key.pem', 'utf8')
+const certificate = fs.readFileSync('cert.pem', 'utf8')
 
-const http = require('http').Server(app)
+const httpsServer = https.createServer({
+    key: privateKey,
+    cert: certificate
+    },
+    app
+)
 
-const io = socketIO(http, {
+const io = socketIO(httpsServer, {
     cors: {
         origin: "*"
     }
-});
+})
 
 app.use(cors())
 
@@ -30,6 +39,6 @@ app.get('/', (req, res) => {
     res.send('Hello World!')
 })
 
-http.listen(port, () => {
+httpsServer.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })

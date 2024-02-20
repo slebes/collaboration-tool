@@ -7,7 +7,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const newSocket = socketIO.connect("http://localhost:4000");
+    const newSocket = socketIO.connect("https://localhost:4000");
     newSocket.on("message", (data) => {
       console.log(data);
     })

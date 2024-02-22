@@ -101,6 +101,11 @@ io.on('connection', (socket) => {
         io.emit('room-list', Object.keys(data));
     })
 
+    socket.on('edit', (msg) => {
+        console.log('edit: ' + msg)
+        io.emit('edit', msg);
+    })
+
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
         // Remove user from room on disconnect

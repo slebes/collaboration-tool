@@ -1,32 +1,18 @@
-import { useEffect, useState } from 'react'
-import socketIO from 'socket.io-client';
-import { Button } from '@mui/material';
+import {useState } from 'react'
+import UserNameDialog from './components/UsernameDialog'
+import Lobby from './components/Lobby'
 
 const App = () => {
 
-  const [socket, setSocket] = useState(null);
-
-  useEffect(() => {
-    const newSocket = socketIO.connect("https://localhost:4000");
-    newSocket.on("message", (data) => {
-      console.log(data);
-    })
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    }
-  }, [])
-
-  const handlePress = () => {
-    socket.emit('message', JSON.stringify({ message: "Hello" }))
-  }
+  const [username, setUsername] = useState();
 
   return (
     <>
-      <h1>Hello!</h1>
-      <Button onClick={handlePress}>Send Hello</Button>
+    {
+      !username 
+      ? <UserNameDialog setUsername={setUsername}></UserNameDialog>
+      : <Lobby username={username}></Lobby>
+    }
     </>
   )
 }

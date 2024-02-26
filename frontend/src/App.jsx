@@ -25,7 +25,15 @@ const App = () => {
   }
 
   const handleJoinRoom = () => {
-    socket.emit('join', 'test')
+    socket.emit('join', 'test', message => {
+      console.log(message)
+    })
+  }
+
+  const handleJoinRoom2 = () => {
+    socket.emit('join', 'test2', message => {
+      console.log(message)
+    })
   }
 
   const sendRoomMessage = () => {
@@ -36,6 +44,7 @@ const App = () => {
     <>
       <h1>Hello!</h1>
       <Button onClick={handleJoinRoom}>JoinRoom</Button>
+      <Button onClick={handleJoinRoom2}>JoinRoom2</Button>
       <Button onClick={handlePress}>Send Hello</Button>
       <Button onClick={sendRoomMessage}>Hello room</Button>
       <ul>

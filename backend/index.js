@@ -35,15 +35,17 @@ io.on('connection', (socket) => {
             io.emit('message', msg);
         }
     })
-    
 
-    socket.on('join', (room) => {
+
+    socket.on('join', (room, cb) => {
         console.log('joining room: ' + room);
         console.log(socket.rooms);
+        // Leave from previous room if socket was in one
         if(socket.rooms.size > 1) {
-            socket.leave(socket.rooms[1])
+            socket.leave(Array.from(socket.rooms)[1])
         }
         socket.join(room);
+        cb('Joined room ' + room);
     })
 
     socket.on('disconnect', () => {

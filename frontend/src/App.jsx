@@ -5,13 +5,14 @@ import { Button } from '@mui/material';
 const App = () => {
 
   const [socket, setSocket] = useState(null);
+  const [roomData, setRoomData] = useState([]);
 
   useEffect(() => {
     const newSocket = socketIO.connect("https://localhost:4000");
     newSocket.on("message", (data) => {
-      console.log(data);
+      console.log("Message received! " + JSON.parse(data).message);
+      setRoomData(oldData => [...oldData, JSON.parse(data).message])
     })
-
     setSocket(newSocket);
 
     return () => {
@@ -23,10 +24,25 @@ const App = () => {
     socket.emit('message', JSON.stringify({ message: "Hello" }))
   }
 
+  const handleJoinRoom = () => {
+    socket.emit('join', 'test')
+  }
+
+  const sendRoomMessage = () => {
+    socket.emit('message', JSON.stringify({ room: 'test', message: 'This message was sent in a room!'}))
+  }
+
   return (
     <>
       <h1>Hello!</h1>
+      <Button onClick={handleJoinRoom}>JoinRoom</Button>
       <Button onClick={handlePress}>Send Hello</Button>
+      <Button onClick={sendRoomMessage}>Hello room</Button>
+      <ul>
+        {roomData.map((message,id) => {
+          return(<li key={message + " " + id}>{message}</li>)
+        })}
+      </ul>
     </>
   )
 }

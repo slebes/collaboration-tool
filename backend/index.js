@@ -26,8 +26,24 @@ app.use(cors())
 io.on('connection', (socket) => {
 
     socket.on('message', (msg) => {
-        console.log('message: ' + msg)
-        io.emit('message', msg);
+        const data = JSON.parse(msg);
+        console.log('message: ' + data)
+        if(data.room){
+            console.log("What is the room?", data.room)
+            io.to(data.room).emit("message", msg)
+        } else {
+            io.emit('message', msg);
+        }
+    })
+    
+
+    socket.on('join', (room) => {
+        console.log('joining room: ' + room);
+        console.log(socket.rooms);
+        if(socket.rooms.size > 1) {
+            socket.leave(socket.rooms[1])
+        }
+        socket.join(room);
     })
 
     socket.on('disconnect', () => {

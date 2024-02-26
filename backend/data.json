@@ -1,1 +1,8 @@
-{"rooms":["Room1","Room2","Room3"]}
+{
+  "rooms": ["Test room", "Another one"],
+  "test": [
+    { "user": "tester", "message": "This message was sent in a room!" },
+    { "user": "tester", "message": "This message was sent in a room!" },
+    { "user": "tester", "message": "This message was sent in a room!" }
+  ]
+}

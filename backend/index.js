@@ -38,6 +38,7 @@ io.on('connection', (socket) => {
         if (data.room) {
             console.log("What is the room?", data.room)
             io.to(data.room).emit("message", msg)
+            db.writeMessage(data.room, "tester", data.message)
         } else {
             io.emit('message', msg);
         }
@@ -52,8 +53,12 @@ io.on('connection', (socket) => {
             socket.leave(Array.from(socket.rooms)[1])
         }
         socket.join(roomName);
+        // Load the messages of the specific room
+        const data = db.dataToJson()
+        const messages = data[roomName] ? data[roomName] : []
         const room = {
-            roomName: roomName
+            roomName,
+            messages
         }
         cb(room);
     })
@@ -77,7 +82,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
     })
-    
+
     // Should this be cleared :D?
     intervalId = setInterval(() => {
         const data = db.dataToJson()

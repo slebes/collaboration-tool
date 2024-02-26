@@ -20,4 +20,15 @@ const writeToFile = (obj) => {
     }
 }
 
-module.exports = { dataToJson, writeToFile };
+const writeMessage = (room, user, message) => {
+    let data = dataToJson()
+    const newMessage = { user, message }
+    if (!data[room]) {
+        data[room] = [];
+    }
+    data[room].push(newMessage)
+
+    writeToFile(data)
+}
+
+module.exports = { dataToJson, writeToFile, writeMessage };

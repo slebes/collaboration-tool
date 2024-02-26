@@ -33,12 +33,12 @@ io.on('connection', (socket) => {
     socket.emit('room-list', data.rooms);
 
     socket.on('message', (msg) => {
+        console.log("What am I receiving?!", msg)
         const data = JSON.parse(msg);
-        console.log('message: ' + data)
         if (data.room) {
-            console.log("What is the room?", data.room)
-            io.to(data.room).emit("message", msg)
-            db.writeMessage(data.room, "tester", data.message)
+            console.log("Emitting message!", data.message)
+            io.to(data.room).emit("message", data.message)
+            db.writeMessage(data.room, data.username, data.message)
         } else {
             io.emit('message', msg);
         }

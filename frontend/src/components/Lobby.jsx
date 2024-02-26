@@ -14,7 +14,8 @@ const Lobby = ({username}) => {
   useEffect(() => {
     const newSocket = socketIO.connect("https://localhost:4000");
     newSocket.on("message", (data) => {
-      console.log("Message received! " + JSON.parse(data).message);
+      //console.log("Did I receive a message?", data)
+      console.log("Message received! " + data);
     })
     newSocket.on('room-list', (data) => {
       setRoomList(data)
@@ -48,7 +49,7 @@ const Lobby = ({username}) => {
           <RoomList roomList={roomList} handleJoinRoom={handleJoinRoom}></RoomList>
           <CreateRoomForm handleCreateRoom={handleCreateRoom}></CreateRoomForm>
         </>
-      :<Room socket={socket} room={room}></Room>
+      :<Room socket={socket} room={room} username={username}></Room>
     }
     </>
   )}

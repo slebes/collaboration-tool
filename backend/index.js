@@ -24,7 +24,13 @@ const io = socketIO(httpsServer, {
 
 app.use(cors())
 
+// eslint-disable-next-line no-unused-vars
+let intervalId
+
 io.on('connection', (socket) => {
+
+    const data = db.dataToJson()
+    socket.emit('room-list', data.rooms);
 
     socket.on('message', (msg) => {
         const data = JSON.parse(msg);
@@ -37,29 +43,46 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('join', (room, cb) => {
-        console.log('joining room: ' + room);
+    // Maybe combine join / create-room maybe not
+    socket.on('join', (roomName, cb) => {
+        console.log('Joining room: ', roomName);
         console.log(socket.rooms);
         // Leave from previous room if socket was in one
         if (socket.rooms.size > 1) {
             socket.leave(Array.from(socket.rooms)[1])
         }
-        socket.join(room);
-        cb('Joined room ' + room);
+        socket.join(roomName);
+        const room = {
+            roomName: roomName
+        }
+        cb(room);
     })
 
-    socket.on('create-channel', (room, cb) => {
-        console.log('Creating room ' + room)
+    socket.on('create-room', (roomName, cb) => {
+        console.log('Creating room ', roomName)
         let data = db.dataToJson();
-        data = { ...data, rooms: data.rooms.concat(room) }
+        data = { ...data, rooms: data.rooms.concat(roomName) }
         db.writeToFile(data)
-
-        cb('Created room ' + room);
+        // Leave from previous room if socket was in one
+        if (socket.rooms.size > 1) {
+            socket.leave(Array.from(socket.rooms)[1])
+        }
+        socket.join(roomName);
+        const room = {
+            roomName: roomName
+        }
+        cb(room);
     })
 
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
     })
+    
+    // Should this be cleared :D?
+    intervalId = setInterval(() => {
+        const data = db.dataToJson()
+        io.emit('room-list', data.rooms);
+    }, 10000)
 })
 
 app.get('/', (req, res) => {

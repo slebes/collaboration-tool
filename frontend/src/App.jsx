@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import socketIO from 'socket.io-client';
 import { Button } from '@mui/material';
+import NewChannel from './components/NewChannel';
 
 const App = () => {
 
@@ -47,6 +48,7 @@ const App = () => {
       <Button onClick={handleJoinRoom2}>JoinRoom2</Button>
       <Button onClick={handlePress}>Send Hello</Button>
       <Button onClick={sendRoomMessage}>Hello room</Button>
+      <NewChannel socket={socket} />
       <ul>
         {roomData.map((message,id) => {
           return(<li key={message + " " + id}>{message}</li>)

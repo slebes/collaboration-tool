@@ -1,8 +1,0 @@
-{
-  "rooms": ["Test room", "Another one"],
-  "test": [
-    { "user": "tester", "message": "This message was sent in a room!" },
-    { "user": "tester", "message": "This message was sent in a room!" },
-    { "user": "tester", "message": "This message was sent in a room!" }
-  ]
-}

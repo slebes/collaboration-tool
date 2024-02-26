@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 const Room = ({socket, room}) => {
     
-    const [messages, setMessages] = useState(["message1", "message2", "message3"]);
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         socket.on("chat message", (data) => {

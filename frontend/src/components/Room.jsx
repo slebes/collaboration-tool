@@ -1,26 +1,39 @@
 import { Typography, List, ListItem, ListItemText, TextField} from "@mui/material";
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const Room = ({socket, room, username}) => {
-    
-    const [messages, setMessages] = useState([]);
+const Room = ({socket}) => {
     const [newMessage, setNewMessage] = useState('');
+    const navigate = useNavigate()
+    const location = useLocation()
+    
+    const [msgs, setMsgs] = useState([]);
+
+    const { username, roomName } = location.state ? location.state : {}
 
     useEffect(() => {
-        socket.on("chat message", (data) => {
-            setMessages(oldData => [...oldData, JSON.parse(data).message])
+        // Make sure the state is received
+        if(!username || !roomName) {
+            navigate("/")
+            return;
+        }
+        socket.emit('join', roomName, data => {
+            setMsgs(data.messages);
+        })
+        socket.on("message", (data) => {
+            console.log(data)
+            const {message,username} = data
+            setMsgs(oldData => [...oldData, {message,username}])
           })
-    }, [socket])
-
+    },[])
+    
     const handleSendMessage = () => {
         const data = {
-            room,
+            roomName: roomName,
             message: newMessage,
             username
         }
-        console.log("What am I sending?", data)
         socket.emit('message', JSON.stringify(data));
-
     }
 
     const handlePress = (event) => {
@@ -34,14 +47,14 @@ const Room = ({socket, room, username}) => {
     return (
     <>
     <Typography variant="h1">
-        {room}
+        {roomName}
     </Typography>
     <TextField value={newMessage} onChange={({ target}) => setNewMessage(target.value)} onKeyDown={handlePress}/>
     <List
     >
-    {messages.map((message, id) => {
+    {msgs.map((message, id) => {
             return(<ListItem key={message + " " + id}>
-                <ListItemText primary={message}/>
+                <ListItemText primary={message.username + ": " + message.message}/>
             </ListItem>)
     })}
     </List>

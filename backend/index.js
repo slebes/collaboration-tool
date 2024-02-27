@@ -30,52 +30,41 @@ let intervalId
 io.on('connection', (socket) => {
 
     const data = db.dataToJson()
-    socket.emit('room-list', data.rooms);
+    socket.on('room-list', (msg) => {
+        socket.emit('room-list', Object.keys(data));
+    })
 
     socket.on('message', (msg) => {
         console.log("What am I receiving?!", msg)
         const data = JSON.parse(msg);
-        if (data.room) {
+        if (data.roomName) {
             console.log("Emitting message!", data.message)
-            io.to(data.room).emit("message", data.message)
-            db.writeMessage(data.room, data.username, data.message)
+            io.to(data.roomName).emit("message", data)
+            db.writeMessage(data.roomName, data.username, data.message)
         } else {
             io.emit('message', msg);
         }
     })
 
-    // Maybe combine join / create-room maybe not
     socket.on('join', (roomName, cb) => {
+        let data = db.dataToJson();
+        if (!(roomName in data)) {
+            console.log('Creating room ', roomName)
+            data[roomName] = {messages: []}
+            db.writeToFile(data)
+        }
+
         console.log('Joining room: ', roomName);
-        console.log(socket.rooms);
         // Leave from previous room if socket was in one
         if (socket.rooms.size > 1) {
             socket.leave(Array.from(socket.rooms)[1])
         }
         socket.join(roomName);
         // Load the messages of the specific room
-        const data = db.dataToJson()
-        const messages = data[roomName] ? data[roomName] : []
         const room = {
-            roomName,
-            messages
-        }
-        cb(room);
-    })
-
-    socket.on('create-room', (roomName, cb) => {
-        console.log('Creating room ', roomName)
-        let data = db.dataToJson();
-        data = { ...data, rooms: data.rooms.concat(roomName) }
-        db.writeToFile(data)
-        // Leave from previous room if socket was in one
-        if (socket.rooms.size > 1) {
-            socket.leave(Array.from(socket.rooms)[1])
-        }
-        socket.join(roomName);
-        const room = {
-            roomName: roomName
-        }
+            roomName: roomName,
+            ...data[roomName]
+        };
         cb(room);
     })
 
@@ -86,7 +75,7 @@ io.on('connection', (socket) => {
     // Should this be cleared :D?
     intervalId = setInterval(() => {
         const data = db.dataToJson()
-        io.emit('room-list', data.rooms);
+        socket.emit('room-list', Object.keys(data));
     }, 10000)
 })
 

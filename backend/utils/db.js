@@ -20,13 +20,13 @@ const writeToFile = (obj) => {
     }
 }
 
-const writeMessage = (room, user, message) => {
+const writeMessage = (room, username, message) => {
     let data = dataToJson()
-    const newMessage = { user, message }
+    const newMessage = { username, message }
     if (!data[room]) {
-        data[room] = [];
+        data[room] = {messages: []};
     }
-    data[room].push(newMessage)
+    data[room].messages.push(newMessage)
 
     writeToFile(data)
 }

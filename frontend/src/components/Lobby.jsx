@@ -33,7 +33,7 @@ const Lobby = ({socket}) => {
       console.log("cleanup")
       socket.off("room-list")
     }
-  }, [])
+  }, [location.state, navigate, socket])
 
   const handleJoinRoom = (roomName) => {
     console.log("join room")

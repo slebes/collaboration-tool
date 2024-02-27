@@ -1,56 +1,52 @@
 import { useEffect, useState } from 'react'
-import socketIO from 'socket.io-client';
 import CreateRoomForm from './CreateRoomForm'
 import Room from './Room'
 import RoomList from './RoomList';
 import { Typography } from '@mui/material'
+import { useNavigate, useLocation } from "react-router-dom";
 
-const Lobby = ({username}) => {
+const Lobby = ({socket}) => {
 
-  const [socket, setSocket] = useState(null);
-  const [room, setRoom] = useState();
   const [roomList, setRoomList] = useState([]);
+  console.log(roomList);
+
+  // GET USERNAME FROM INNER STATE!
+  const location = useLocation()
+  const navigate = useNavigate()
+  
+  const username = location.state?.username
 
   useEffect(() => {
-    const newSocket = socketIO.connect("https://localhost:4000");
-    newSocket.on("message", (data) => {
-      //console.log("Did I receive a message?", data)
-      console.log("Message received! " + data);
-    })
-    newSocket.on('room-list', (data) => {
+    
+    if(!location.state) {
+      navigate("/")
+      return;
+    }
+
+    socket.on('room-list', (data) => {
+      console.log("fetching room list: " + data)
       setRoomList(data)
     })
-    setSocket(newSocket);
+
+    socket.emit('room-list', "hello ::DDDD")
     return () => {
-      newSocket.disconnect();
+      console.log("cleanup")
+      socket.off("room-list")
     }
   }, [])
 
-  const handleCreateRoom = (roomName) => {
-    socket.emit('create-room', roomName, data => {
-      setRoom(data.roomName)
-    })
-  }
-
   const handleJoinRoom = (roomName) => {
-    socket.emit('join', roomName, data => {
-      console.log(data)
-      setRoom(data.roomName)
-    })
+    console.log("join room")
+    navigate(`/room/${roomName}`, { state: { username, roomName }})
   }
   
   return (
-    <>{
-      !room 
-      ? <>
-          <Typography variant="h1">
-              Hello! {username}
-          </Typography>
-          <RoomList roomList={roomList} handleJoinRoom={handleJoinRoom}></RoomList>
-          <CreateRoomForm handleCreateRoom={handleCreateRoom}></CreateRoomForm>
-        </>
-      :<Room socket={socket} room={room} username={username}></Room>
-    }
+    <>
+      <Typography variant="h1">
+          Hello! {username}
+      </Typography>
+      <RoomList roomList={roomList} handleJoinRoom={handleJoinRoom}></RoomList>
+      <CreateRoomForm handleCreateRoom={handleJoinRoom}></CreateRoomForm>
     </>
   )}
 

@@ -1,16 +1,19 @@
 import { TextField, Button } from '@mui/material';
 import {useState} from 'react'
+import { useNavigate } from "react-router-dom";
 
-const UsernameDialog = ({setUsername}) => {
+const UsernameDialog = () => {
 
     const [value, setValue] = useState('')
+    const navigate = useNavigate()
     const handleChange = (e) => {
       e.preventDefault();
       setValue(e.target.value);
     }
     const handleClick = (e) => {
         e.preventDefault();
-        value !== '' && setUsername(value)
+        // Change site to "Lobby"
+        navigate("/lobby", { state: { username: value }})
       }
     return (
     <>

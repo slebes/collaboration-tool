@@ -45,11 +45,12 @@ const Room = ({socket}) => {
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
         if(selectedFile !== null) {
-            const data = {
+                        const data = {
                 name: selectedFile.name,
                 size: selectedFile.size,
                 rawData: selectedFile
             }
+            // TODO: Maybe add some confiramtion for errors.
             socket.emit('file-upload', data)
             event.target.value = null
         }

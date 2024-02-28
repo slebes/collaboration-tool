@@ -19,7 +19,9 @@ const httpsServer = https.createServer({
 const io = socketIO(httpsServer, {
     cors: {
         origin: "*"
-    }
+    },
+    // Support 10mb buffer.
+    maxHttpBufferSize: 1e7
 })
 
 app.use(cors())
@@ -35,6 +37,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('file-upload', (data) => {
+        console.log("file upload")
         const [defaultRoom, currentRoom] = socket.rooms
         db.saveFile(currentRoom, data.name, data.size, data.rawData)
     })

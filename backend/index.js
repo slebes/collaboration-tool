@@ -8,6 +8,7 @@ const port = 4000
 const privateKey = fs.readFileSync('key.pem', 'utf8')
 const certificate = fs.readFileSync('cert.pem', 'utf8')
 const db = require('./utils/db')
+const utils = require('./utils/utils')
 
 const httpsServer = https.createServer({
     key: privateKey,
@@ -28,6 +29,12 @@ app.use(cors())
 
 // eslint-disable-next-line no-unused-vars
 let intervalId
+// Map to maintain userlist for rooms. 
+// The value contains object {socketId, username} if socketIds need to be accessed later for diagnostics etc.
+// TODO: Probably worth a refactor
+// Learned afterwards... :D This could have probably been made a lot easier by assigning username to the socket itself 
+// Check Selection of the username: https://socket.io/get-started/private-messaging-part-1/
+const roomUserMap = new Map(Object.keys(db.dataToJson()).map((key) => [key, []]))
 
 io.on('connection', (socket) => {
 
@@ -35,6 +42,7 @@ io.on('connection', (socket) => {
     socket.on('room-list', () => {
         socket.emit('room-list', Object.keys(data));
     })
+
 
     socket.on('file-upload', (data, cb) => {
         const [defaultRoom, currentRoom] = socket.rooms
@@ -56,7 +64,8 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('join', (roomName, cb) => {
+    socket.on('join', ({username, roomName}, cb) => {
+        socket.auth = {username: "asdf"}
         let data = db.dataToJson();
         if (!(roomName in data)) {
             console.log('Creating room: ', roomName)
@@ -64,14 +73,17 @@ io.on('connection', (socket) => {
             db.writeToFile(data)
             console.log(data)
             io.emit('room-list', Object.keys(data));
+            roomUserMap.set(roomName, [])
         }
-
         console.log('Joining room: ', roomName);
-        // Leave from previous room if socket was in one
-        if (socket.rooms.size > 1) {
-            socket.leave(Array.from(socket.rooms)[1])
-        }
+        if (socket.rooms.size > 1) utils.removeFromRoom(Array.from(socket.rooms)[1], roomUserMap, socket, io)
         socket.join(roomName);
+
+        // Emit userList when user joins
+        const updatedUserlist = [...roomUserMap.get(roomName), {socket: socket.id, username}]
+        roomUserMap.set(roomName, updatedUserlist)
+        io.to(roomName).emit("join", updatedUserlist.map(object => object.username))
+
         // Load the messages of the specific room
         const room = {
             roomName: roomName,
@@ -95,6 +107,9 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
+        // Remove user from room on disconnect
+        const previousRoom = utils.findRoomBySocket(roomUserMap, socket.id)
+        if (previousRoom) utils.removeFromRoom(previousRoom, roomUserMap, socket, io)
     })
 
     // Added room-list update to room remove and room addition

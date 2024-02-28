@@ -1,5 +1,5 @@
-import { Typography, List, ListItem, ListItemText, TextField, Button, ListItemButton} from "@mui/material";
-import { useEffect, useState } from "react";
+import { Box, Card, Typography, List, ListItem, ListItemText, TextField, Button, ListItemButton, Grid} from "@mui/material";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Room = ({socket}) => {
@@ -8,6 +8,8 @@ const Room = ({socket}) => {
     const location = useLocation()
     const [msgs, setMsgs] = useState([]);
     const [files, setFiles] = useState([])
+    const [users, setUsers] = useState(['User1', 'User2', 'User3'])
+    const elementRef = useRef(null)
 
     const { username, roomName } = location.state ? location.state : {}
 
@@ -17,13 +19,14 @@ const Room = ({socket}) => {
             navigate("/")
             return;
         }
-        socket.emit('join', roomName, data => {
+        socket.emit('join', { username, roomName } , data => {
             setMsgs(data.messages);
             setFiles(data.files)
         })
         socket.on("message", (data) => {
             const {message,username} = data
             setMsgs(oldData => [...oldData, {message,username}])
+            elementRef?.current?.scrollIntoView()
           })
         socket.on("file-upload", (data) => {
             const {filename} = data
@@ -34,10 +37,15 @@ const Room = ({socket}) => {
             socket.off("file-upload")
             navigate("/lobby", { state: { username }});
         })
+        socket.on("join", (data)  => {
+            data
+            setUsers(data)
+        })
         return () => {
             console.log("cleanup room")
             socket.off("message")
             socket.off("file-upload")
+            socket.off("join")
           }
     },[navigate, roomName, socket, username])
 
@@ -50,13 +58,12 @@ const Room = ({socket}) => {
         socket.emit('message', JSON.stringify(data));
     }
 
-  const handlePress = (event) => {
-    if (event.key === "Enter") {
-      console.log("Enter pressed");
-      handleSendMessage();
-      setNewMessage("");
+    const handlePress = (event) => {
+        if(event.key === 'Enter') {
+            handleSendMessage()
+            setNewMessage('')
+        } 
     }
-  };
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
@@ -90,40 +97,44 @@ const Room = ({socket}) => {
     <Typography variant="h1">
         {roomName}
     </Typography>
-
-    
-    <TextField value={newMessage} onChange={({ target}) => setNewMessage(target.value)} onKeyDown={handlePress}/>
-    <Button
-    variant="contained"
-    component="label"
-    >
-    Upload File
-    <input
-        onChange={handleFileChange}
-        type="file"
-        hidden
-    />
-    </Button>
-    <List
-    >
-    {msgs.map((message, id) => {
-            return(<ListItem key={message + " " + id}>
-                <ListItemText primary={message.username + ": " + message.message}/>
-            </ListItem>)
-    })}
-    </List>
-
-    <List
-    >
-    {files.map((filename, id) => {
-        return(
-            <ListItem key={filename + " " + id}>
-                <ListItemButton onClick={(e) => handleFileLinkClick(filename)}>
-                    <ListItemText primary={filename} />
-                </ListItemButton>
-            </ListItem>)
-    })}
-    </List>
+    <Grid container >
+        <Card>
+            <Box style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
+                <List>
+                    {msgs.map((message, id) => {return(
+                        <ListItem key={message + " " + id}>
+                            <ListItemText primary={message.username + ": " + message.message}/>
+                        </ListItem>)
+                    })}
+                </List>
+                <div className="MessagesList" ref={elementRef}></div>
+            </Box>
+            <TextField value={newMessage} onChange={({ target}) => setNewMessage(target.value)} onKeyDown={handlePress}/>
+        </Card>
+        <Card>
+            <List style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
+                {files.map((filename, id) => {return(
+                    <ListItem key={filename + " " + id}>
+                        <ListItemButton onClick={(e) => handleFileLinkClick(filename)}>
+                            <ListItemText primary={filename} />
+                        </ListItemButton>
+                    </ListItem>)
+                })}
+            </List>
+            <Button variant="contained" component="label">
+                Upload File <input onChange={handleFileChange} type="file" hidden/>
+            </Button>
+        </Card>
+        <Card>
+            <List style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
+                {users.map((username, id) => {return(
+                    <ListItem key={username + " " + id}>
+                        <ListItemText primary={username} />
+                    </ListItem>)
+                })}
+            </List>
+        </Card>
+    </Grid>
     </>
   );
 };

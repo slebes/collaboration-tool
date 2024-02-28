@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { Typography } from '@mui/material'
 import { useNavigate, useLocation } from "react-router-dom";
 
-const Lobby = ({socket}) => {
-
+const Lobby = ({ socket }) => {
   const [roomList, setRoomList] = useState([]);
   console.log(roomList);
 
@@ -28,6 +27,7 @@ const Lobby = ({socket}) => {
           Hello {username}! This is the frontpage.
       </Typography>
     </>
-  )}
+  );
+};
 
-  export default Lobby
+export default Lobby;

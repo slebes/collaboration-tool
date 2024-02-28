@@ -45,13 +45,13 @@ const Room = ({socket}) => {
         socket.emit('message', JSON.stringify(data));
     }
 
-    const handlePress = (event) => {
-        if(event.key === 'Enter') {
-            console.log("Enter pressed")
-            handleSendMessage()
-            setNewMessage('')
-        } 
+  const handlePress = (event) => {
+    if (event.key === "Enter") {
+      console.log("Enter pressed");
+      handleSendMessage();
+      setNewMessage("");
     }
+  };
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
@@ -120,7 +120,7 @@ const Room = ({socket}) => {
     })}
     </List>
     </>
-    )
-}
+  );
+};
 
-export default Room
+export default Room;

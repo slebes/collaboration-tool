@@ -3,7 +3,6 @@ import { useState } from 'react'
 
 const CreateRoomForm = ({handleCreateRoom}) => {
     const [value, setValue] = useState('')
-
     
     const handleChange = (e) => {
       e.preventDefault();
@@ -12,12 +11,19 @@ const CreateRoomForm = ({handleCreateRoom}) => {
     const handleClick = (e) => {
         e.preventDefault();
         value && value !== '' && handleCreateRoom(value)
-      }
+    }
+    
+    const handlePress = (event) => {
+      if(event.key === 'Enter') {
+          console.log("Enter pressed")
+          handleClick()
+      } 
+    }
     return (
-    <>
-      <TextField label={'Create room'} onChange={handleChange}>Username:</TextField>
+    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
+      <TextField label={'Create room'} onChange={handleChange} onKeyDown={handlePress}>Username:</TextField>
       <Button onClick={handleClick}>Create</Button>
-    </>
+    </div>
     )
 }
 

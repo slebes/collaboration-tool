@@ -29,6 +29,11 @@ const Room = ({socket}) => {
             const {filename} = data
             setFiles(oldData => [...oldData, filename])
         })
+        return () => {
+            console.log("cleanup room")
+            socket.off("message")
+            socket.off("file-upload")
+          }
     },[navigate, roomName, socket, username])
 
     const handleSendMessage = () => {

@@ -10,21 +10,28 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import socketIO from 'socket.io-client';
+import NavBar from './components/NavBar.jsx';
 
 const socket = socketIO.connect("https://localhost:4000");
 
 const router = createBrowserRouter([
   {
+    path: "/signup",
+    element: <App/>,
+  },
+  {
     path: "/",
-    element: <App />,
-  },
-  {
-    path: "/lobby",
-    element: <Lobby socket={socket}/>,
-  },
-  {
-    path: "/room/*",
-    element: <Room socket={socket}/>
+    element: <NavBar socket={socket} />,
+    children: [
+      {
+        path: "/lobby",
+        element: <Lobby socket={socket}/>,
+      },
+      {
+        path: "/room/*",
+        element: <Room socket={socket}/>
+      },
+    ]
   },
   {
     path: "*",
@@ -33,7 +40,7 @@ const router = createBrowserRouter([
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>,
+  
+    <RouterProvider router={router}/>
+  
 )

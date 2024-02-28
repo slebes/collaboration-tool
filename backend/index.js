@@ -29,9 +29,14 @@ let intervalId
 
 io.on('connection', (socket) => {
 
-    const data = db.dataToJson()
     socket.on('room-list', (msg) => {
+        const data = db.dataToJson()
         socket.emit('room-list', Object.keys(data));
+    })
+
+    socket.on('file-upload', (data) => {
+        const [defaultRoom, currentRoom] = socket.rooms
+        db.saveFile(currentRoom, data.name, data.size, data.rawData)
     })
 
     socket.on('message', (msg) => {
@@ -50,7 +55,7 @@ io.on('connection', (socket) => {
         let data = db.dataToJson();
         if (!(roomName in data)) {
             console.log('Creating room ', roomName)
-            data[roomName] = {messages: []}
+            data[roomName] = {messages: [], files: []}
             db.writeToFile(data)
         }
 

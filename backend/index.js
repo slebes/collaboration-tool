@@ -19,7 +19,9 @@ const httpsServer = https.createServer({
 const io = socketIO(httpsServer, {
     cors: {
         origin: "*"
-    }
+    },
+    // Support 10mb buffer.
+    maxHttpBufferSize: 1e7
 })
 
 app.use(cors())
@@ -34,9 +36,14 @@ io.on('connection', (socket) => {
         socket.emit('room-list', Object.keys(data));
     })
 
-    socket.on('file-upload', (data) => {
+    socket.on('file-upload', (data, cb) => {
         const [defaultRoom, currentRoom] = socket.rooms
-        db.saveFile(currentRoom, data.name, data.size, data.rawData)
+        try {
+            const savedFilename = db.saveFile(currentRoom, data.name, data.size, data.rawData)
+            io.to(currentRoom).emit('file-upload', {roomName: currentRoom, filename: savedFilename})
+        } catch(e) {
+            cb("Error saving file")
+        }
     })
 
     socket.on('message', (msg) => {
@@ -54,7 +61,7 @@ io.on('connection', (socket) => {
     socket.on('join', (roomName, cb) => {
         let data = db.dataToJson();
         if (!(roomName in data)) {
-            console.log('Creating room ', roomName)
+            console.log('Creating room: ', roomName)
             data[roomName] = {messages: [], files: []}
             db.writeToFile(data)
         }
@@ -86,6 +93,19 @@ io.on('connection', (socket) => {
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
+})
+
+app.get('/room/:roomName/:filename', (req, res) => {
+    const { roomName, filename } = req.params
+    try {
+        const file = db.getFile(roomName, filename)
+        file !== ""
+        ? res.sendFile(file, { root: "./data"})
+        : res.status(404)
+    } catch (e) {
+        console.log(e)
+        res.status(500)
+    }
 })
 
 httpsServer.listen(port, () => {

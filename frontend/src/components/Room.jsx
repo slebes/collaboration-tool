@@ -1,4 +1,4 @@
-import { Typography, List, ListItem, ListItemText, TextField, Button} from "@mui/material";
+import { Typography, List, ListItem, ListItemText, TextField, Button, ListItemButton} from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -7,6 +7,7 @@ const Room = ({socket}) => {
     const navigate = useNavigate()
     const location = useLocation()
     const [msgs, setMsgs] = useState([]);
+    const [files, setFiles] = useState([])
 
     const { username, roomName } = location.state ? location.state : {}
 
@@ -18,13 +19,18 @@ const Room = ({socket}) => {
         }
         socket.emit('join', roomName, data => {
             setMsgs(data.messages);
+            setFiles(data.files)
         })
         socket.on("message", (data) => {
             const {message,username} = data
             setMsgs(oldData => [...oldData, {message,username}])
           })
-    },[])
-    
+        socket.on("file-upload", (data) => {
+            const {filename} = data
+            setFiles(oldData => [...oldData, filename])
+        })
+    },[navigate, roomName, socket, username])
+
     const handleSendMessage = () => {
         const data = {
             roomName: roomName,
@@ -45,15 +51,29 @@ const Room = ({socket}) => {
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
         if(selectedFile !== null) {
-            const data = {
+                        const data = {
                 name: selectedFile.name,
                 size: selectedFile.size,
                 rawData: selectedFile
             }
+            // TODO: Maybe add some confiramtion for errors.
             socket.emit('file-upload', data)
             event.target.value = null
         }
       };
+
+    const handleFileLinkClick = async (filename) => {
+        // https://stackoverflow.com/questions/73410132/how-to-download-a-file-using-reactjs-with-axios-in-the-frontend-and-fastapi-in-t
+        const response = await fetch(`https://localhost:4000/room/${roomName}/${filename}`)
+        const blob = await response.blob()
+        var url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
 
     return (
     <>
@@ -79,6 +99,18 @@ const Room = ({socket}) => {
     {msgs.map((message, id) => {
             return(<ListItem key={message + " " + id}>
                 <ListItemText primary={message.username + ": " + message.message}/>
+            </ListItem>)
+    })}
+    </List>
+
+    <List
+    >
+    {files.map((filename, id) => {
+        return(
+            <ListItem key={filename + " " + id}>
+                <ListItemButton onClick={(e) => handleFileLinkClick(filename)}>
+                    <ListItemText primary={filename} />
+                </ListItemButton>
             </ListItem>)
     })}
     </List>

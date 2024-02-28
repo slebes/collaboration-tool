@@ -91,6 +91,17 @@ app.get('/', (req, res) => {
     res.send('Hello World!')
 })
 
+app.get('/room/:roomName/:filename', (req, res) => {
+    const { roomName, filename } = req.params
+    try {
+        const file = db.getFile(roomName, filename)
+        res.sendFile(file, { root: "./data"})
+    } catch (e) {
+        console.log(e)
+        res.send(e.message)
+    }
+})
+
 httpsServer.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })

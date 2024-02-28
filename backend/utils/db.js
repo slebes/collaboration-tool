@@ -62,4 +62,12 @@ const saveFile = (roomName, filename, size, rawData) => {
     }
 }
 
-module.exports = { dataToJson, writeToFile, writeMessage, saveFile};
+const getFile = (roomName, filename) => {
+    if (fs.existsSync(`./data/${roomName}/${filename}`)) {
+        return `${roomName}/${filename}`
+    } else {
+        throw new Error(`File doesn't exist`)
+    }
+}
+
+module.exports = { dataToJson, writeToFile, writeMessage, saveFile, getFile};

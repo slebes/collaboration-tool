@@ -32,42 +32,37 @@ const writeMessage = (room, username, message) => {
 }
 
 const saveFile = (roomName, filename, size, rawData) => {
-    try {
-        const data = dataToJson()
-        if (!(roomName in data)) throw new Error("Unknown room name")
-        // Scuffed file copy name checker
-        if (!fs.existsSync(`./data/${roomName}`)) fs.mkdirSync(`./data/${roomName}`)
-        let fileWriteName = filename
-        for (var i = 0; i < Infinity; i++) {
-            if (i === 0){
-                if (!fs.existsSync(`./data/${roomName}/${filename}`)) {
-                    break
-                }
-            } else {
-                const index = filename.lastIndexOf(".")
-                const firstPart = filename.slice(0, index)
-                const secondPart = filename.slice(index)
-                const copyName = `${firstPart}(${i})${secondPart}`                    
-                if (!fs.existsSync(`./data/${roomName}/${copyName}`)) {
-                    fileWriteName = copyName
-                    break
-                }
+    const data = dataToJson()
+    if (!(roomName in data)) throw new Error("Unknown room name")
+    // Scuffed file copy name checker
+    if (!fs.existsSync(`./data/${roomName}`)) fs.mkdirSync(`./data/${roomName}`)
+    let fileWriteName = filename
+    for (var i = 0; i < Infinity; i++) {
+        if (i === 0){
+            if (!fs.existsSync(`./data/${roomName}/${filename}`)) {
+                break
+            }
+        } else {
+            const index = filename.lastIndexOf(".")
+            const firstPart = filename.slice(0, index)
+            const secondPart = filename.slice(index)
+            const copyName = `${firstPart} (${i})${secondPart}`                    
+            if (!fs.existsSync(`./data/${roomName}/${copyName}`)) {
+                fileWriteName = copyName
+                break
             }
         }
-        fs.writeFileSync(`./data/${roomName}/${fileWriteName}`, rawData)
-        data[roomName].files.push(filename)
-        writeToFile(data)
-    } catch (e) {
-        console.log("Error saving file", e)
     }
+    fs.writeFileSync(`./data/${roomName}/${fileWriteName}`, rawData)
+    data[roomName].files.push(fileWriteName)
+    writeToFile(data)
+    return fileWriteName
 }
 
 const getFile = (roomName, filename) => {
-    if (fs.existsSync(`./data/${roomName}/${filename}`)) {
-        return `${roomName}/${filename}`
-    } else {
-        throw new Error(`File doesn't exist`)
-    }
+    return fs.existsSync(`./data/${roomName}/${filename}`) 
+    ? `${roomName}/${filename}`
+    : ""
 }
 
 module.exports = { dataToJson, writeToFile, writeMessage, saveFile, getFile};

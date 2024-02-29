@@ -62,6 +62,8 @@ io.on('connection', (socket) => {
             console.log('Creating room: ', roomName)
             data[roomName] = {messages: [], files: []}
             db.writeToFile(data)
+            console.log(data)
+            socket.emit('room-list', Object.keys(data));
         }
 
         console.log('Joining room: ', roomName);

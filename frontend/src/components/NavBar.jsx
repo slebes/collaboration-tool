@@ -25,12 +25,15 @@ const NavBar = ({socket}) => {
       setRoomList(data)
     })
 
-    socket.emit('room-list', "hello ::DDDD")
     return () => {
       console.log("cleanup")
       socket.off("room-list")
     }
-  }, [location.state, navigate, socket])
+  }, [location.state, navigate, socket]);
+
+  useEffect(() => {
+    socket.emit('room-list', "hello ::DDDD")
+  }, [])
 
   const handleJoinRoom = (roomName) => {
     console.log("join room")

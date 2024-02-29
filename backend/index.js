@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
             data[roomName] = {messages: [], files: []}
             db.writeToFile(data)
             console.log(data)
-            socket.emit('room-list', Object.keys(data));
+            io.emit('room-list', Object.keys(data));
         }
 
         console.log('Joining room: ', roomName);
@@ -97,11 +97,11 @@ io.on('connection', (socket) => {
         console.log("A client has disconnected")
     })
 
-    // Should this be cleared :D?
-    intervalId = setInterval(() => {
+    // Added room-list update to room remove and room addition
+    /*intervalId = setInterval(() => {
         const data = db.dataToJson()
         socket.emit('room-list', Object.keys(data));
-    }, 10000)
+    }, 10000)*/
 })
 
 app.get('/', (req, res) => {

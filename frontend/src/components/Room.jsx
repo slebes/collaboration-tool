@@ -32,14 +32,14 @@ const Room = ({socket}) => {
             const {filename} = data
             setFiles(oldData => [...oldData, filename])
         })
+        socket.on("join", (data)  => {
+            setUsers(data)
+        })
         socket.on("delete-room", () => {
             socket.off("message")
             socket.off("file-upload")
+            socket.off("join")
             navigate("/lobby", { state: { username }});
-        })
-        socket.on("join", (data)  => {
-            data
-            setUsers(data)
         })
         return () => {
             console.log("cleanup room")

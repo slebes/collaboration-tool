@@ -71,7 +71,6 @@ io.on('connection', (socket) => {
             console.log('Creating room: ', roomName)
             data[roomName] = {messages: [], files: []}
             db.writeToFile(data)
-            console.log(data)
             io.emit('room-list', Object.keys(data));
             roomUserMap.set(roomName, [])
         }
@@ -100,7 +99,8 @@ io.on('connection', (socket) => {
         // Signal to everyone that the room has been deleted
         // Kick them out (do it on the frontend side)
         io.to(roomName).emit('delete-room')
-
+        io.in(roomName).socketsLeave(roomName);
+        roomUserMap.delete(roomName)
         // Emit the new updated room list.
         io.emit('room-list', Object.keys(data));
     })

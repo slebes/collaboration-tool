@@ -95,6 +95,7 @@ io.on('connection', (socket) => {
         let data = db.dataToJson()
         delete data[roomName]
         db.writeToFile(data)
+        db.deleteRoomData(roomName)
 
         // Signal to everyone that the room has been deleted
         // Kick them out (do it on the frontend side)

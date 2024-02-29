@@ -8,7 +8,7 @@ const Room = ({socket}) => {
     const location = useLocation()
     const [msgs, setMsgs] = useState([]);
     const [files, setFiles] = useState([])
-    const [users, setUsers] = useState(['User1', 'User2', 'User3'])
+    const [users, setUsers] = useState([])
     const elementRef = useRef(null)
 
     const { username, roomName } = location.state ? location.state : {}
@@ -26,7 +26,6 @@ const Room = ({socket}) => {
         socket.on("message", (data) => {
             const {message,username} = data
             setMsgs(oldData => [...oldData, {message,username}])
-            elementRef?.current?.scrollIntoView()
           })
         socket.on("file-upload", (data) => {
             const {filename} = data
@@ -48,6 +47,10 @@ const Room = ({socket}) => {
             socket.off("join")
           }
     },[navigate, roomName, socket, username])
+
+    useEffect(() => {
+        elementRef?.current?.scrollIntoView()
+    }, [msgs])
 
     const handleSendMessage = () => {
         const data = {

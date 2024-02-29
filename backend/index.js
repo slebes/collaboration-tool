@@ -83,12 +83,7 @@ io.on('connection', (socket) => {
         roomUserMap.set(roomName, updatedUserlist)
         io.to(roomName).emit("join", updatedUserlist.map(object => object.username))
 
-        // Load the messages of the specific room
-        const room = {
-            roomName: roomName,
-            ...data[roomName]
-        };
-        cb(room);
+        cb(data[roomName]);
     })
 
     socket.on('delete-room', roomName => {

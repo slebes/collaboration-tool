@@ -14,12 +14,20 @@ const UsernameDialog = () => {
         e.preventDefault();
         // Change site to "Lobby"
         navigate("/lobby", { state: { username: value }})
-      }
+    }
+
+    const handlePress = (event) => {
+      if(event.key === 'Enter') {
+          console.log("Enter pressed")
+          navigate("/lobby", { state: { username: value }})
+      } 
+    }
+
     return (
-    <>
-      <TextField label={'Username'} onChange={handleChange}></TextField>
+    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
+      <TextField label={'Username'} onChange={handleChange} onKeyDown={handlePress}></TextField>
       <Button onClick={handleClick}>Okay</Button>
-    </>
+    </div>
     )
 }
 

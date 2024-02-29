@@ -18,7 +18,9 @@ const CreateRoomForm = ({handleCreateRoom}) => {
     const handlePress = (event) => {
       if(event.key === 'Enter') {
           console.log("Enter pressed")
-          handleClick()
+          const newRoom = value;
+          setValue('');
+          newRoom && newRoom !== '' && handleCreateRoom(newRoom)
       } 
     }
     return (

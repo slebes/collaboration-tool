@@ -102,6 +102,7 @@ const Room = ({socket}) => {
     </Typography>
     <Grid container >
         <Card>
+            <Typography variant="h6"sx={{paddingLeft: '5px', paddingRight: '5px', borderBottom:'1px solid black'}}>Messages:</Typography>
             <Box style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
                 <List>
                     {msgs.map((message, id) => {return(
@@ -114,7 +115,8 @@ const Room = ({socket}) => {
             </Box>
             <TextField value={newMessage} onChange={({ target}) => setNewMessage(target.value)} onKeyDown={handlePress}/>
         </Card>
-        <Card>
+        <Card sx={{textAlign: 'center'}}>
+            <Typography variant="h6"sx={{paddingLeft: '5px', paddingRight: '5px', borderBottom:'1px solid black'}}>Files:</Typography>
             <List style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
                 {files.map((filename, id) => {return(
                     <ListItem key={filename + " " + id}>
@@ -129,6 +131,7 @@ const Room = ({socket}) => {
             </Button>
         </Card>
         <Card>
+            <Typography variant="h6"sx={{paddingLeft: '5px', paddingRight: '5px', borderBottom:'1px solid black'}}>Active users:</Typography>
             <List style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
                 {users.map((username, id) => {return(
                     <ListItem key={username + " " + id}>

@@ -43,12 +43,12 @@ const NavBar = ({socket}) => {
   return (
     <>
     <Grid container gap={6} spacing={1} sx={{height: '100%' }}>
-      <Grid item xs={2.5} sx={{backgroundColor: 'lightgray', padding: '30px'}}>
+      <Grid item xs={2.5} sx={{backgroundColor: 'lightgray', padding: '30px', paddingTop: '30px !important'}}>
         <CreateRoomForm handleCreateRoom={handleJoinRoom}></CreateRoomForm>
         <RoomList roomList={roomList} handleJoinRoom={handleJoinRoom} socket={socket}></RoomList>
       </Grid>
-      <Grid item xs={8.5}>
-        <Outlet />
+      <Grid item xs={8.5} sx={{paddingTop: '30px !important'}}>
+        <Outlet/>
       </Grid>
     </Grid>
     </>

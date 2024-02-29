@@ -29,6 +29,11 @@ const Room = ({socket}) => {
             const {filename} = data
             setFiles(oldData => [...oldData, filename])
         })
+        socket.on("delete-room", () => {
+            socket.off("message")
+            socket.off("file-upload")
+            navigate("/lobby", { state: { username }});
+        })
         return () => {
             console.log("cleanup room")
             socket.off("message")
@@ -45,13 +50,13 @@ const Room = ({socket}) => {
         socket.emit('message', JSON.stringify(data));
     }
 
-    const handlePress = (event) => {
-        if(event.key === 'Enter') {
-            console.log("Enter pressed")
-            handleSendMessage()
-            setNewMessage('')
-        } 
+  const handlePress = (event) => {
+    if (event.key === "Enter") {
+      console.log("Enter pressed");
+      handleSendMessage();
+      setNewMessage("");
     }
+  };
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
@@ -120,7 +125,7 @@ const Room = ({socket}) => {
     })}
     </List>
     </>
-    )
-}
+  );
+};
 
-export default Room
+export default Room;

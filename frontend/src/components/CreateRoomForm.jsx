@@ -10,7 +10,9 @@ const CreateRoomForm = ({handleCreateRoom}) => {
     }
     const handleClick = (e) => {
         e.preventDefault();
-        value && value !== '' && handleCreateRoom(value)
+        const newRoom = value;
+        setValue('')
+        newRoom && newRoom !== '' && handleCreateRoom(newRoom)
     }
     
     const handlePress = (event) => {
@@ -21,7 +23,7 @@ const CreateRoomForm = ({handleCreateRoom}) => {
     }
     return (
     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
-      <TextField label={'Create room'} onChange={handleChange} onKeyDown={handlePress}>Username:</TextField>
+      <TextField label={'Create room'} value={value} onChange={handleChange} onKeyDown={handlePress}>Username:</TextField>
       <Button onClick={handleClick}>Create</Button>
     </div>
     )

@@ -31,8 +31,8 @@ let intervalId
 
 io.on('connection', (socket) => {
 
-    socket.on('room-list', (msg) => {
-        const data = db.dataToJson()
+    const data = db.dataToJson()
+    socket.on('room-list', () => {
         socket.emit('room-list', Object.keys(data));
     })
 
@@ -47,10 +47,8 @@ io.on('connection', (socket) => {
     })
 
     socket.on('message', (msg) => {
-        console.log("What am I receiving?!", msg)
         const data = JSON.parse(msg);
         if (data.roomName) {
-            console.log("Emitting message!", data.message)
             io.to(data.roomName).emit("message", data)
             db.writeMessage(data.roomName, data.username, data.message)
         } else {
@@ -64,6 +62,8 @@ io.on('connection', (socket) => {
             console.log('Creating room: ', roomName)
             data[roomName] = {messages: [], files: []}
             db.writeToFile(data)
+            console.log(data)
+            io.emit('room-list', Object.keys(data));
         }
 
         console.log('Joining room: ', roomName);
@@ -80,15 +80,28 @@ io.on('connection', (socket) => {
         cb(room);
     })
 
+    socket.on('delete-room', roomName => {
+        let data = db.dataToJson()
+        delete data[roomName]
+        db.writeToFile(data)
+
+        // Signal to everyone that the room has been deleted
+        // Kick them out (do it on the frontend side)
+        io.to(roomName).emit('delete-room')
+
+        // Emit the new updated room list.
+        io.emit('room-list', Object.keys(data));
+    })
+
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
     })
 
-    // Should this be cleared :D?
-    intervalId = setInterval(() => {
+    // Added room-list update to room remove and room addition
+    /*intervalId = setInterval(() => {
         const data = db.dataToJson()
         socket.emit('room-list', Object.keys(data));
-    }, 10000)
+    }, 10000)*/
 })
 
 app.get('/', (req, res) => {

@@ -25,12 +25,15 @@ const NavBar = ({socket}) => {
       setRoomList(data)
     })
 
-    socket.emit('room-list', "hello ::DDDD")
     return () => {
       console.log("cleanup")
       socket.off("room-list")
     }
-  }, [location.state, navigate, socket])
+  }, [location.state, navigate, socket]);
+
+  useEffect(() => {
+    socket.emit('room-list', "hello ::DDDD")
+  }, [])
 
   const handleJoinRoom = (roomName) => {
     console.log("join room")
@@ -42,7 +45,7 @@ const NavBar = ({socket}) => {
     <Grid container gap={6} spacing={1} sx={{height: '100%' }}>
       <Grid item xs={2.5} sx={{backgroundColor: 'lightgray', padding: '30px'}}>
         <CreateRoomForm handleCreateRoom={handleJoinRoom}></CreateRoomForm>
-        <RoomList roomList={roomList} handleJoinRoom={handleJoinRoom}></RoomList>
+        <RoomList roomList={roomList} handleJoinRoom={handleJoinRoom} socket={socket}></RoomList>
       </Grid>
       <Grid item xs={8.5}>
         <Outlet />

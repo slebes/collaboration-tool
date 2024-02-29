@@ -65,4 +65,12 @@ const getFile = (roomName, filename) => {
     : ""
 }
 
-module.exports = { dataToJson, writeToFile, writeMessage, saveFile, getFile};
+const deleteRoomData = (roomName) => {
+    try {
+        fs.rmSync(`./data/${roomName}`, { recursive: true, force: true });
+    } catch (e) {
+        console.log("Failed to delete room data\n ", e)
+    }
+}
+
+module.exports = { dataToJson, writeToFile, writeMessage, saveFile, getFile, deleteRoomData };

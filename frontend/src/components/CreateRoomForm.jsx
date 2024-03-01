@@ -1,4 +1,4 @@
-import { TextField, Button } from "@mui/material";
+import { TextField, Button, Typography } from "@mui/material";
 import { useState } from 'react'
 
 const CreateRoomForm = ({handleCreateRoom}) => {
@@ -24,10 +24,13 @@ const CreateRoomForm = ({handleCreateRoom}) => {
       } 
     }
     return (
-    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
-      <TextField label={'Create room'} value={value} onChange={handleChange} onKeyDown={handlePress}>Username:</TextField>
-      <Button onClick={handleClick}>Create</Button>
-    </div>
+    <>
+      <Typography variant="h3">Create Room:</Typography>
+      <div style={{display: 'flex', flexDirection: 'row', marginBottom: '10px'}}>
+        <TextField label={'Create room'} value={value} onChange={handleChange} onKeyDown={handlePress}>Username:</TextField>
+        <Button onClick={handleClick}>Create</Button>
+      </div>
+    </>
     )
 }
 

@@ -11,6 +11,7 @@ import {
 } from "react-router-dom";
 import socketIO from 'socket.io-client';
 import NavBar from './components/NavBar.jsx';
+import { Toaster } from 'react-hot-toast';
 
 const socket = socketIO.connect("https://localhost:4000");
 
@@ -42,5 +43,8 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <RouterProvider router={router} />
+    <Toaster
+      position="top-left"
+    />
   </React.StrictMode>,
 )

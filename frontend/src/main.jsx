@@ -11,8 +11,7 @@ import {
 } from "react-router-dom";
 import socketIO from 'socket.io-client';
 import NavBar from './components/NavBar.jsx';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Toaster } from 'react-hot-toast';
 
 const socket = socketIO.connect("https://localhost:4000");
 
@@ -44,14 +43,8 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-    <ToastContainer
-      position="bottom-center"
-      autoClose={5000}
-      animation="bounce"
-      hideProgressBar={true}
-      closeOnClick
-      draggable={false}
-      theme="colored"
+    <Toaster
+      position="top-left"
     />
   </React.StrictMode>,
 )

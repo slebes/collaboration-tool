@@ -1,7 +1,7 @@
 import { Box, Card, Typography, List, ListItem, ListItemText, TextField, Button, ListItemButton, Grid} from "@mui/material";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from 'react-toastify';
+import  toast from 'react-hot-toast';
 
 const Room = ({socket}) => {
     const [newMessage, setNewMessage] = useState('');
@@ -36,8 +36,8 @@ const Room = ({socket}) => {
             setUsers(data)
         })
         socket.on("delete-room", () => {
-            console.log("deleting room "+ roomName)
-            toast.error('The room you were in was deleted.')
+            console.log("deleting room "+ roomName);
+            toast.error(`The room \"${roomName}\" was deleted.`);
             navigate("/lobby", { state: { username }});
         })
         return () => {
@@ -45,6 +45,7 @@ const Room = ({socket}) => {
             socket.off("message")
             socket.off("file-upload")
             socket.off("join")
+            socket.off("delete-room");
           }
     },[navigate, roomName, socket, username])
 
@@ -100,10 +101,10 @@ const Room = ({socket}) => {
     <Typography variant="h1">
         {roomName}
     </Typography>
-    <Grid container >
+    <Grid container>
         <Card>
             <Typography variant="h6"sx={{paddingLeft: '5px', paddingRight: '5px', borderBottom:'1px solid black'}}>Messages:</Typography>
-            <Box style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
+            <Box style={{maxHeight: '80VH', height: '75VH', overflow: 'auto'}}>
                 <List>
                     {msgs.map((message, id) => {return(
                         <ListItem key={message + " " + id}>
@@ -117,7 +118,7 @@ const Room = ({socket}) => {
         </Card>
         <Card sx={{textAlign: 'center'}}>
             <Typography variant="h6"sx={{paddingLeft: '5px', paddingRight: '5px', borderBottom:'1px solid black'}}>Files:</Typography>
-            <List style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
+            <List style={{maxHeight: '80VH', height: '75VH', overflow: 'auto'}}>
                 {files.map((filename, id) => {return(
                     <ListItem key={filename + " " + id}>
                         <ListItemButton onClick={(e) => handleFileLinkClick(filename)}>
@@ -132,7 +133,7 @@ const Room = ({socket}) => {
         </Card>
         <Card>
             <Typography variant="h6"sx={{paddingLeft: '5px', paddingRight: '5px', borderBottom:'1px solid black'}}>Active users:</Typography>
-            <List style={{maxHeight: '80VH', height: '80VH', overflow: 'auto'}}>
+            <List style={{maxHeight: '80VH', height: '75VH', overflow: 'auto'}}>
                 {users.map((username, id) => {return(
                     <ListItem key={username + " " + id}>
                         <ListItemText primary={username} />

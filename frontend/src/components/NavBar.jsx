@@ -45,7 +45,7 @@ const NavBar = ({socket}) => {
         <CreateRoomForm handleCreateRoom={handleJoinRoom}></CreateRoomForm>
         <RoomList roomList={roomList} handleJoinRoom={handleJoinRoom} socket={socket}></RoomList>
       </Grid>
-      <Grid item xs={8.5} sx={{paddingTop: '30px !important'}}>
+      <Grid item xs={8.5} sx={{paddingTop: '10px !important'}}>
         <Outlet/>
       </Grid>
     </Grid>

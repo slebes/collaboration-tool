@@ -3,8 +3,6 @@ import { Typography } from '@mui/material'
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Lobby = ({ socket }) => {
-  const [roomList, setRoomList] = useState([]);
-  console.log(roomList);
 
   // GET USERNAME FROM INNER STATE!
   const location = useLocation()

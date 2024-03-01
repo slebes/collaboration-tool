@@ -1,6 +1,7 @@
 import { Box, Card, Typography, List, ListItem, ListItemText, TextField, Button, ListItemButton, Grid} from "@mui/material";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from 'react-toastify';
 
 const Room = ({socket}) => {
     const [newMessage, setNewMessage] = useState('');
@@ -35,9 +36,8 @@ const Room = ({socket}) => {
             setUsers(data)
         })
         socket.on("delete-room", () => {
-            socket.off("message")
-            socket.off("file-upload")
-            socket.off("join")
+            console.log("deleting room "+ roomName)
+            toast.error('The room you were in was deleted.')
             navigate("/lobby", { state: { username }});
         })
         return () => {

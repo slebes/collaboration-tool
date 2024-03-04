@@ -1,7 +1,8 @@
 import { Box, Card, Typography, List, ListItem, ListItemText, TextField, Button, ListItemButton, Grid} from "@mui/material";
 import { useEffect, useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import  toast from 'react-hot-toast';
+import TextEditor from "./TextEditor";
 
 const Room = ({socket}) => {
     const [newMessage, setNewMessage] = useState('');
@@ -10,6 +11,7 @@ const Room = ({socket}) => {
     const [msgs, setMsgs] = useState([]);
     const [files, setFiles] = useState([])
     const [users, setUsers] = useState([])
+    const [editorOnFile, setEditorOnFile] = useState(undefined);
     const elementRef = useRef(null)
 
     const { username, roomName } = location.state ? location.state : {}
@@ -83,8 +85,18 @@ const Room = ({socket}) => {
         }
       };
 
-    const handleFileLinkClick = async (filename) => {
+    const handleFileLinkClick = async (e,filename) => {
+        e.preventDefault();
         // https://stackoverflow.com/questions/73410132/how-to-download-a-file-using-reactjs-with-axios-in-the-frontend-and-fastapi-in-t
+        if (filename.endsWith('.txt')){
+            console.log("here")
+            setEditorOnFile(filename);
+        } else {
+            await downloadFile(filename);
+        }
+    }
+
+    const downloadFile = async (filename) => {
         const response = await fetch(`https://localhost:4000/room/${roomName}/${filename}`)
         const blob = await response.blob()
         var url = window.URL.createObjectURL(blob);
@@ -96,8 +108,12 @@ const Room = ({socket}) => {
         a.remove();
     }
 
+    const closeEditor = () => {
+        setEditorOnFile(undefined);
+    }
+
     return (
-    <>
+    <div style={{position: 'relative'}}>
     <Typography variant="h1">
         {roomName}
     </Typography>
@@ -121,7 +137,7 @@ const Room = ({socket}) => {
             <List style={{maxHeight: '80VH', height: '75VH', overflow: 'auto'}}>
                 {files.map((filename, id) => {return(
                     <ListItem key={filename + " " + id}>
-                        <ListItemButton onClick={(e) => handleFileLinkClick(filename)}>
+                        <ListItemButton onClick={(e) => handleFileLinkClick(e,filename)}>
                             <ListItemText primary={filename} />
                         </ListItemButton>
                     </ListItem>)
@@ -142,7 +158,10 @@ const Room = ({socket}) => {
             </List>
         </Card>
     </Grid>
-    </>
+    {
+        editorOnFile && <TextEditor socket={socket} closeEditor={closeEditor} filename={editorOnFile} downloadFile={downloadFile}/>
+    }
+    </div>
   );
 };
 

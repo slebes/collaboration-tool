@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Import Quill styles
-import socketIO from 'socket.io-client';
+import { Button } from '@mui/material';
 
 // Workaround for issue with inserting multiple whitespaces
 // https://github.com/quilljs/quill/issues/1751#issuecomment-881294908
@@ -15,26 +15,21 @@ const modules = {
   preserveWhiteSpace: true
 }
 
-function TextEditor() {
-
+function TextEditor({socket, closeEditor, filename, downloadFile}) {
   const [value, setValue] = useState('');
-  const [socket, setSocket] = useState(null);
   const [newDelta, setNewDelta] = useState(null)
   const [selection, setSelection] = useState(0)
   const quillRef = useRef(null)
 
   // Create soccet connection
   useEffect(() => {
-    const newSocket = socketIO.connect("https://localhost:4000");
     // Listen to edit events
-    newSocket.on("edit", (data) => {
+    socket.on("edit", (data) => {
       setNewDelta(JSON.parse(data).delta)
     })
-    
-    setSocket(newSocket)
 
     return () => {
-      newSocket.disconnect();
+      socket.disconnect();
     }
   }, [])
 
@@ -51,13 +46,19 @@ function TextEditor() {
   }
 
   return (
-    <ReactQuill
-      ref={quillRef}
-      value={value}
-      onChange={handleChange}
-      modules={modules}
-      selection={selection}
-    />
+    <div style={{position: 'absolute', top:'110px', backgroundColor: 'white'}}>
+      <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
+        <Button onClick={closeEditor}>Close</Button>
+        <Button onClick={() => downloadFile(filename)}>Download</Button>
+      </div>
+      <ReactQuill
+        ref={quillRef}
+        value={value}
+        onChange={handleChange}
+        modules={modules}
+        selection={selection}
+      />
+    </div>
   );
 }
 

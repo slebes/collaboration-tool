@@ -12,6 +12,7 @@ import {
 import socketIO from 'socket.io-client';
 import NavBar from './components/NavBar.jsx';
 import { Toaster } from 'react-hot-toast';
+import TextEditor from './components/TextEditor.jsx';
 
 const socket = socketIO.connect("https://localhost:4000");
 
@@ -30,7 +31,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/room/*",
-        element: <Room socket={socket}/>
+        element: <Room socket={socket}/>,
       },
     ]
   },

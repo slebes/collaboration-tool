@@ -24,25 +24,29 @@ function TextEditor({socket, closeEditor, filename, downloadFile}) {
   // Create soccet connection
   useEffect(() => {
     // Listen to edit events
-    socket.on("edit", (data) => {
-      setNewDelta(JSON.parse(data).delta)
+    socket.on("edit", (delta) => {
+      setNewDelta(delta)
     })
-
+    socket.on("edit-start", (delta) => {
+      console.log("start edit")
+      setValue(delta)
+    })
+    socket.emit("edit-start")
     return () => {
-      socket.disconnect();
+      socket.off("edit")
+      socket.off("edit-start")
     }
-  }, [])
+  }, [socket])
 
   useEffect(() => {
     if(quillRef.current !== null && newDelta !== null) {
-      const combined = quillRef.current.unprivilegedEditor.getContents().compose(newDelta)
-      setValue(combined)
+      setValue(newDelta)
     }
   }, [newDelta])
   
   function handleChange(value, delta, source, editor) {
-    source === "user" && setSelection(editor.getSelection())
-    socket?.connected && source === "user" && socket.emit("edit", JSON.stringify({ delta: delta }))
+    setValue(editor.getContents())
+    socket?.connected && source === "user" && socket.emit("edit", delta )
   }
 
   return (

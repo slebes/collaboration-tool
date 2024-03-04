@@ -9,6 +9,7 @@ const privateKey = fs.readFileSync('key.pem', 'utf8')
 const certificate = fs.readFileSync('cert.pem', 'utf8')
 const db = require('./utils/db')
 const utils = require('./utils/utils')
+const Delta = require('quill-delta')
 
 const httpsServer = https.createServer({
     key: privateKey,
@@ -27,8 +28,6 @@ const io = socketIO(httpsServer, {
 
 app.use(cors())
 
-// eslint-disable-next-line no-unused-vars
-let intervalId
 // Map to maintain userlist for rooms. 
 // The value contains object {socketId, username} if socketIds need to be accessed later for diagnostics etc.
 // TODO: Probably worth a refactor
@@ -36,13 +35,20 @@ let intervalId
 // Check Selection of the username: https://socket.io/get-started/private-messaging-part-1/
 const roomUserMap = new Map(Object.keys(db.dataToJson()).map((key) => [key, []]))
 
+// TODO: Files in edit could be stored here as a map: file : {[users], delta}
+// When new socket joins edit session the combined delta is emitted to that socket
+// Sockets emit edit events that contain delta for each change and the server combines these
+// When file is saved it is updated to the "DB"
+// When all sockets leave the edit session. The key value pair from map can be deleted.
+// const fileEditSessionMap = new Map()
+let fileEdits
+
 io.on('connection', (socket) => {
 
     const data = db.dataToJson()
     socket.on('room-list', () => {
         socket.emit('room-list', Object.keys(data));
     })
-
 
     socket.on('file-upload', (data, cb) => {
         const [defaultRoom, currentRoom] = socket.rooms
@@ -101,10 +107,24 @@ io.on('connection', (socket) => {
         io.emit('room-list', Object.keys(data));
     })
 
-    socket.on('edit', (msg) => {
-        console.log('edit: ' + msg)
-        io.emit('edit', msg);
+    socket.on('edit-start', () => {
+        if(!fileEdits) fileEdits = new Delta()
+        console.log(fileEdits)
+        socket.emit("edit-start", fileEdits)
     })
+
+    socket.on('edit', (delta) => {
+        fileEdits = fileEdits.compose(delta)
+        // console.log('edit: ' + JSON.stringify(delta))
+        // console.log('whole delta: ' + JSON.stringify(fileEdits))
+        // Send changes to other sockets
+        socket.broadcast.emit('edit', fileEdits);
+    })
+
+    // socket.on('edit-save', (data) => {
+    // })
+    // socket.on('edit-leave', (data) => {
+    // })
 
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
@@ -112,12 +132,6 @@ io.on('connection', (socket) => {
         const previousRoom = utils.findRoomBySocket(roomUserMap, socket.id)
         if (previousRoom) utils.removeFromRoom(previousRoom, roomUserMap, socket, io)
     })
-
-    // Added room-list update to room remove and room addition
-    /*intervalId = setInterval(() => {
-        const data = db.dataToJson()
-        socket.emit('room-list', Object.keys(data));
-    }, 10000)*/
 })
 
 app.get('/', (req, res) => {

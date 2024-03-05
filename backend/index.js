@@ -149,13 +149,18 @@ io.on('connection', (socket) => {
         // Send changes to other sockets
     })
 
-    // socket.on('edit-save', (data) => {
-    // })
+    socket.on('edit-save', ({ roomName, filename, value }) => {
+        console.log(value)
+        const fileDest = `./data/${roomName}/${filename}`
+        console.log(fileDest)
+        fs.writeFileSync(fileDest, value)
+    })
     socket.on('edit-leave', ({ roomName, filename }) => {
         const fileKey = `${roomName}-${filename}`
         const session = fileEditMap.get(fileKey);
         if (session) {
             const userCount = session.users - 1
+            console.log("User count?!?", userCount)
             if (userCount <= 0) {
                 console.log("Everyone left, deleting quill delta...")
                 fileEditMap.delete(fileKey)

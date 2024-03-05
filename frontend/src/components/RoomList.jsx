@@ -9,7 +9,7 @@ import {
 
 const RoomList = ({ roomList, handleJoinRoom, socket }) => {
   const handleDelete = (roomName) => {
-    socket.emit("delete-room", roomName);
+    socket.emit("delete-room", {roomName: roomName});
   };
   return (
     <>

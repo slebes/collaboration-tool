@@ -18,6 +18,7 @@ const httpsServer = https.createServer({
     app
 )
 
+
 const io = socketIO(httpsServer, {
     cors: {
         origin: "*"
@@ -92,7 +93,8 @@ io.on('connection', (socket) => {
         cb(data[roomName]);
     })
 
-    socket.on('delete-room', roomName => {
+    socket.on('delete-room', ({roomName}) => {
+        console.log(`Deleting room: ${roomName}`);
         let data = db.dataToJson()
         delete data[roomName]
         db.writeToFile(data)

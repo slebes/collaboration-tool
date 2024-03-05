@@ -1,25 +1,24 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import Lobby from './components/Lobby.jsx'
-import Room from './components/Room.jsx';
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
+import Lobby from "./components/Lobby.jsx";
+import Room from "./components/Room.jsx";
+import "./index.css";
 import {
   createBrowserRouter,
   Navigate,
   RouterProvider,
 } from "react-router-dom";
-import socketIO from 'socket.io-client';
-import NavBar from './components/NavBar.jsx';
-import { Toaster } from 'react-hot-toast';
-import TextEditor from './components/TextEditor.jsx';
+import socketIO from "socket.io-client";
+import NavBar from "./components/NavBar.jsx";
+import { Toaster } from "react-hot-toast";
 
 const socket = socketIO.connect("https://localhost:4000");
 
 const router = createBrowserRouter([
   {
     path: "/signup",
-    element: <App/>,
+    element: <App />,
   },
   {
     path: "/",
@@ -27,25 +26,23 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/lobby",
-        element: <Lobby socket={socket}/>,
+        element: <Lobby socket={socket} />,
       },
       {
         path: "/room/*",
-        element: <Room socket={socket}/>,
+        element: <Room socket={socket} />,
       },
-    ]
+    ],
   },
   {
     path: "*",
-    element: <Navigate to="/signup" />
-  }
+    element: <Navigate to="/signup" />,
+  },
 ]);
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-    <Toaster
-      position="top-left"
-    />
-  </React.StrictMode>,
-)
+    <Toaster position="top-left" />
+  </React.StrictMode>
+);

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css"; // Import Quill styles
-import { Button } from "@mui/material";
-import Delta from "quill-delta"
+import { Button, Typography } from "@mui/material";
 
 // Workaround for issue with inserting multiple whitespaces
 // https://github.com/quilljs/quill/issues/1751#issuecomment-881294908
@@ -14,28 +13,24 @@ class PreserveWhiteSpace {
 Quill.register("modules/preserveWhiteSpace", PreserveWhiteSpace);
 const modules = {
   preserveWhiteSpace: true,
+  toolbar: false
 };
 
-function TextEditor({ socket, closeEditor, filename, downloadFile, roomName }) {
-  const [value, setValue] = useState(new Delta());
-  const [selection, setSelection] = useState(0);
+function TextEditor({initialValue, socket, closeEditor, filename, downloadFile, roomName }) {
+  const [value, setValue] = useState(initialValue);
+  const [selection, setSelection] = useState();
   const quillRef = useRef(null);
 
   // Create soccet connection
   useEffect(() => {
-    socket.emit("edit-start", { filename, roomName }, (fileEdits) => {
-      console.log(fileEdits);
-      setValue(new Delta(fileEdits));
-    });
     // Listen to edit events
     socket.on("edit", (delta) => {
       setValue((oldValue) => oldValue.compose(delta));
     });
     return () => {
       socket.off("edit");
-      socket.emit("edit-leave", { roomName, filename });
     };
-  }, [socket, filename, roomName]);
+  }, [socket, filename, roomName, initialValue]);
 
   const handleChange = (value, delta, source, editor) => {
     setValue(editor.getContents());
@@ -55,6 +50,7 @@ function TextEditor({ socket, closeEditor, filename, downloadFile, roomName }) {
     <div
       style={{ position: "absolute", top: "110px", backgroundColor: "white" }}
     >
+      <Typography variant="h5">{filename}</Typography>
       <div
         style={{
           display: "flex",
@@ -67,6 +63,7 @@ function TextEditor({ socket, closeEditor, filename, downloadFile, roomName }) {
         <Button onClick={() => downloadFile(filename)}>Download</Button>
       </div>
       <ReactQuill
+        style={{height: "80VH", width: "60VW"}}
         ref={quillRef}
         value={value}
         onChange={handleChange}

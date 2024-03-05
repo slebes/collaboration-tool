@@ -14,6 +14,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import toast from "react-hot-toast";
 import TextEditor from "./TextEditor";
+import Delta from "quill-delta"
 
 const Room = ({ socket }) => {
   const [newMessage, setNewMessage] = useState("");
@@ -29,7 +30,6 @@ const Room = ({ socket }) => {
 
   useEffect(() => {
     // Make sure the state is received
-    console.log("Room Effecting");
     if (!username || !roomName) {
       navigate("/");
       return;
@@ -50,12 +50,10 @@ const Room = ({ socket }) => {
       setUsers(data);
     });
     socket.on("delete-room", () => {
-      console.log("deleting room " + roomName);
       toast.error(`The room \"${roomName}\" was deleted.`);
       navigate("/lobby", { state: { username } });
     });
     return () => {
-      console.log("cleanup room");
       socket.off("message");
       socket.off("file-upload");
       socket.off("join");
@@ -66,6 +64,15 @@ const Room = ({ socket }) => {
   useEffect(() => {
     elementRef?.current?.scrollIntoView();
   }, [msgs]);
+  
+  // Emit edit-leave when changing room mid edit
+  useEffect(() => {
+    if(editorOnFile && editorOnFile.roomName !== roomName) {
+      console.log("leave")
+      socket.emit("edit-leave", { roomName: editorOnFile.roomName, filename: editorOnFile.filename });
+      setEditorOnFile(undefined);
+    }
+  }, [editorOnFile, roomName, socket])
 
   const handleSendMessage = () => {
     const data = {
@@ -85,7 +92,6 @@ const Room = ({ socket }) => {
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
-    console.log(typeof selectedFile);
     if (selectedFile !== null) {
       const data = {
         name: selectedFile.name,
@@ -105,8 +111,9 @@ const Room = ({ socket }) => {
     e.preventDefault();
     // https://stackoverflow.com/questions/73410132/how-to-download-a-file-using-reactjs-with-axios-in-the-frontend-and-fastapi-in-t
     if (filename.endsWith(".txt")) {
-      console.log("here");
-      setEditorOnFile(filename);
+      socket.emit("edit-start", { filename, roomName }, (fileEdits) => {
+        setEditorOnFile({roomName, filename: filename, initialValue: new Delta(fileEdits)});
+      });
     } else {
       await downloadFile(filename);
     }
@@ -127,13 +134,28 @@ const Room = ({ socket }) => {
   };
 
   const closeEditor = () => {
-    socket.emit("edit-leave", { roomName, filename: editorOnFile });
+    socket.emit("edit-leave", { roomName, filename: editorOnFile.filename });
     setEditorOnFile(undefined);
   };
 
   return (
     <div style={{ position: "relative" }}>
       <Typography variant="h1">{roomName}</Typography>
+
+      {editorOnFile 
+      ? (
+      <Box>
+          <TextEditor
+            initialValue={editorOnFile.initialValue}
+            socket={socket}
+            closeEditor={closeEditor}
+            filename={editorOnFile.filename}
+            downloadFile={downloadFile}
+            roomName={editorOnFile.roomName}
+          />
+      </Box>
+      )
+      :<>
       <Grid container>
         <Card>
           <Typography
@@ -216,15 +238,8 @@ const Room = ({ socket }) => {
           </List>
         </Card>
       </Grid>
-      {editorOnFile && (
-        <TextEditor
-          socket={socket}
-          closeEditor={closeEditor}
-          filename={editorOnFile}
-          downloadFile={downloadFile}
-          roomName={roomName}
-        />
-      )}
+      </>
+      }
     </div>
   );
 };

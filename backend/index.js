@@ -34,7 +34,6 @@ app.use(cors())
 // Learned afterwards... :D This could have probably been made a lot easier by assigning username to the socket itself 
 // Check Selection of the username: https://socket.io/get-started/private-messaging-part-1/
 const roomUserMap = new Map(Object.keys(db.dataToJson()).map((key) => [key, []]))
-
 const fileEditMap = new Map()
 
 io.on('connection', (socket) => {
@@ -83,6 +82,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('delete-room', ({ roomName }) => {
+        //TODO: clear edit sessions
         console.log(`Deleting room: ${roomName}`);
         let data = db.dataToJson()
         delete data[roomName]
@@ -139,7 +139,7 @@ io.on('connection', (socket) => {
         const fileKey = `${roomName}-${filename}`
         const session = fileEditMap.get(fileKey);
         if (session) {
-            const userCount = session.users.length
+            const userCount = session.users.length - 1
             if (userCount <= 0) {
                 console.log("Everyone left, deleting quill delta...")
                 fileEditMap.delete(fileKey)
@@ -155,9 +155,9 @@ io.on('connection', (socket) => {
         // Remove user from room and edit sessions on disconnect
         const previousRoom = utils.findBySocket(roomUserMap, socket.id)
         const fileEditUserMap = new Map(Array.from(fileEditMap, ([key, value]) => [key, value.users]))
-        const fileEditSession = utils.findBySocket(fileEditUserMap, socket.id)
+        const fileKey = utils.findBySocket(fileEditUserMap, socket.id)
         if (previousRoom) utils.removeFromRoom(previousRoom, roomUserMap, socket, io)
-        if (fileEditSession) utils.removeFromEditSession(fileEditSession, fileEditMap, socket)
+        if (fileKey) utils.removeFromEditSession(fileKey, fileEditMap, socket)
     })
 })
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css"; // Import Quill styles
 import { Button } from "@mui/material";
+import Delta from "quill-delta"
 
 // Workaround for issue with inserting multiple whitespaces
 // https://github.com/quilljs/quill/issues/1751#issuecomment-881294908
@@ -16,32 +17,25 @@ const modules = {
 };
 
 function TextEditor({ socket, closeEditor, filename, downloadFile, roomName }) {
-  const [value, setValue] = useState({});
-  const [newDelta, setNewDelta] = useState(null);
+  const [value, setValue] = useState(new Delta());
   const [selection, setSelection] = useState(0);
   const quillRef = useRef(null);
 
   // Create soccet connection
   useEffect(() => {
-    // Listen to edit events
-    socket.on("edit", (delta) => {
-      setNewDelta(delta.delta);
-    });
     socket.emit("edit-start", { filename, roomName }, (fileEdits) => {
       console.log(fileEdits);
-      setValue(fileEdits.delta);
+      setValue(new Delta(fileEdits));
+    });
+    // Listen to edit events
+    socket.on("edit", (delta) => {
+      setValue((oldValue) => oldValue.compose(delta));
     });
     return () => {
       socket.off("edit");
+      socket.emit("edit-leave", { roomName, filename });
     };
   }, [socket, filename, roomName]);
-
-  useEffect(() => {
-    if (quillRef.current !== null && newDelta !== null) {
-      const updatedDelta = value.compose(newDelta);
-      setValue(updatedDelta);
-    }
-  }, [newDelta]);
 
   const handleChange = (value, delta, source, editor) => {
     setValue(editor.getContents());

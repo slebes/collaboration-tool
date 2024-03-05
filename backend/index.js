@@ -10,7 +10,6 @@ const certificate = fs.readFileSync('cert.pem', 'utf8')
 const db = require('./utils/db')
 const utils = require('./utils/utils')
 const Delta = require('quill-delta')
-const util = require('util');
 
 const httpsServer = https.createServer({
     key: privateKey,
@@ -18,7 +17,6 @@ const httpsServer = https.createServer({
 },
     app
 )
-
 
 const io = socketIO(httpsServer, {
     cors: {
@@ -37,17 +35,9 @@ app.use(cors())
 // Check Selection of the username: https://socket.io/get-started/private-messaging-part-1/
 const roomUserMap = new Map(Object.keys(db.dataToJson()).map((key) => [key, []]))
 
-
-// TODO: Files in edit could be stored here as a map: file : {[users], delta}
-// When new socket joins edit session the combined delta is emitted to that socket
-// Sockets emit edit events that contain delta for each change and the server combines these
-// When file is saved it is updated to the "DB"
-// When all sockets leave the edit session. The key value pair from map can be deleted.
-// const fileEditSessionMap = new Map()
 const fileEditMap = new Map()
 
 io.on('connection', (socket) => {
-
     const data = db.dataToJson()
     socket.on('room-list', () => {
         socket.emit('room-list', Object.keys(data));
@@ -98,7 +88,6 @@ io.on('connection', (socket) => {
         delete data[roomName]
         db.writeToFile(data)
         db.deleteRoomData(roomName)
-
         // Signal to everyone that the room has been deleted
         // Kick them out (do it on the frontend side)
         io.to(roomName).emit('delete-room')
@@ -108,29 +97,24 @@ io.on('connection', (socket) => {
         io.emit('room-list', Object.keys(data));
     })
 
-    socket.on('edit-start', ({ roomName, filename }, cb) => {
+    socket.on('edit-start', ({ roomName, filename, username }, cb) => {
         console.log("Started editing " + roomName + " " + filename)
-        //sdfsdfsdfsdfsdf
-        // data/roomname/filename
-        // const data = fs...//
-        // fileEdits
         try {
             const fileKey = `${roomName}-${filename}`
             if (fileEditMap.has(fileKey)) {
                 const oldEdit = fileEditMap.get(fileKey)
-                const newEdit = { delta: oldEdit.delta, users: oldEdit.users + 1 }
+                const newEdit = { delta: oldEdit.delta, users: [...oldEdit.users, {socket: socket.id, username: username}]}
                 fileEditMap.set(fileKey, newEdit);
-                cb(newEdit);
+                cb(newEdit.delta);
             } else {
                 console.log("Creating a map", fileKey)
                 const data = fs.readFileSync(`./data/${roomName}/${filename}`)
                 const fileEdits = new Delta([{ "insert": data.toString() }])
-                fileEditMap.set(fileKey, { delta: fileEdits, users: 1 })
-                cb({ delta: fileEdits, users: 1 })
+                fileEditMap.set(fileKey, { delta: fileEdits, users: [{socket: socket.id, username: username}] })
+                cb(fileEdits)
             }
         } catch (e) {
             console.log("Failed to create a MAP")
-            //console.log(e)
         }
     })
 
@@ -140,41 +124,40 @@ io.on('connection', (socket) => {
         if (old) {
             const newDelta = old.delta.compose(delta)
             fileEditMap.set(fileKey, { delta: newDelta, users: old.users });
-            socket.broadcast.emit('edit', { delta: delta, users: old.users });
+            socket.broadcast.emit('edit', delta);
         } else {
             console.log("Error editing file. No delta exists for file!");
         }
-        // console.log('edit: ' + JSON.stringify(delta))
-        // console.log('whole delta: ' + JSON.stringify(fileEdits))
-        // Send changes to other sockets
     })
 
     socket.on('edit-save', ({ roomName, filename, value }) => {
-        console.log(value)
         const fileDest = `./data/${roomName}/${filename}`
-        console.log(fileDest)
         fs.writeFileSync(fileDest, value)
     })
+
     socket.on('edit-leave', ({ roomName, filename }) => {
         const fileKey = `${roomName}-${filename}`
         const session = fileEditMap.get(fileKey);
         if (session) {
-            const userCount = session.users - 1
-            console.log("User count?!?", userCount)
+            const userCount = session.users.length
             if (userCount <= 0) {
                 console.log("Everyone left, deleting quill delta...")
                 fileEditMap.delete(fileKey)
             } else {
-                fileEditMap.set(fileKey, { delta: session.delta, users: session.users - 1 });
+                const updatedUserList = session.users.filter(user => user.socket !== socket.id)
+                fileEditMap.set(fileKey, { delta: session.delta, users: updatedUserList});
             }
         }
     })
 
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
-        // Remove user from room on disconnect
-        const previousRoom = utils.findRoomBySocket(roomUserMap, socket.id)
+        // Remove user from room and edit sessions on disconnect
+        const previousRoom = utils.findBySocket(roomUserMap, socket.id)
+        const fileEditUserMap = new Map(Array.from(fileEditMap, ([key, value]) => [key, value.users]))
+        const fileEditSession = utils.findBySocket(fileEditUserMap, socket.id)
         if (previousRoom) utils.removeFromRoom(previousRoom, roomUserMap, socket, io)
+        if (fileEditSession) utils.removeFromEditSession(fileEditSession, fileEditMap, socket)
     })
 })
 

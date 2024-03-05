@@ -25,31 +25,34 @@ function TextEditor({ socket, closeEditor, filename, downloadFile, roomName }) {
   useEffect(() => {
     // Listen to edit events
     socket.on("edit", (delta) => {
-      console.log("Delta?");
-      console.log(delta);
-      setNewDelta(delta);
+      setNewDelta(delta.delta);
     });
-    console.log("Effecting text editor");
     socket.emit("edit-start", { filename, roomName }, (fileEdits) => {
-      console.log("File edits?");
       console.log(fileEdits);
-      setValue(fileEdits);
+      setValue(fileEdits.delta);
     });
     return () => {
       socket.off("edit");
     };
-  }, [socket, filename]);
+  }, [socket, filename, roomName]);
 
   useEffect(() => {
     if (quillRef.current !== null && newDelta !== null) {
-      setValue(newDelta);
+      const updatedDelta = value.compose(newDelta);
+      setValue(updatedDelta);
     }
   }, [newDelta]);
 
-  function handleChange(value, delta, source, editor) {
+  const handleChange = (value, delta, source, editor) => {
     setValue(editor.getContents());
-    socket?.connected && source === "user" && socket.emit("edit", delta);
-  }
+    socket?.connected &&
+      source === "user" &&
+      socket.emit("edit", { roomName, filename, delta });
+  };
+
+  const saveFile = () => {
+    // implement quill saving here
+  };
 
   return (
     <div
@@ -63,6 +66,7 @@ function TextEditor({ socket, closeEditor, filename, downloadFile, roomName }) {
         }}
       >
         <Button onClick={closeEditor}>Close</Button>
+        <Button onClick={saveFile}>Save</Button>
         <Button onClick={() => downloadFile(filename)}>Download</Button>
       </div>
       <ReactQuill

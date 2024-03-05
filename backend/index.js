@@ -115,27 +115,55 @@ io.on('connection', (socket) => {
         // const data = fs...//
         // fileEdits
         try {
-            const data = fs.readFileSync(`./data/${roomName}/${filename}`)
-            const fileEdits = new Delta([{ "insert": data.toString() }])
-
-            cb(fileEdits)
+            const fileKey = `${roomName}-${filename}`
+            if (fileEditMap.has(fileKey)) {
+                const oldEdit = fileEditMap.get(fileKey)
+                const newEdit = { delta: oldEdit.delta, users: oldEdit.users + 1 }
+                fileEditMap.set(fileKey, newEdit);
+                cb(newEdit);
+            } else {
+                console.log("Creating a map", fileKey)
+                const data = fs.readFileSync(`./data/${roomName}/${filename}`)
+                const fileEdits = new Delta([{ "insert": data.toString() }])
+                fileEditMap.set(fileKey, { delta: fileEdits, users: 1 })
+                cb({ delta: fileEdits, users: 1 })
+            }
         } catch (e) {
-            console.log(e)
+            console.log("Failed to create a MAP")
+            //console.log(e)
         }
     })
 
-    socket.on('edit', (delta) => {
-
+    socket.on('edit', ({ roomName, filename, delta }) => {
+        const fileKey = `${roomName}-${filename}`
+        const old = fileEditMap.get(fileKey)
+        if (old) {
+            const newDelta = old.delta.compose(delta)
+            fileEditMap.set(fileKey, { delta: newDelta, users: old.users });
+            socket.broadcast.emit('edit', { delta: delta, users: old.users });
+        } else {
+            console.log("Error editing file. No delta exists for file!");
+        }
         // console.log('edit: ' + JSON.stringify(delta))
         // console.log('whole delta: ' + JSON.stringify(fileEdits))
         // Send changes to other sockets
-        socket.broadcast.emit('edit', delta);
     })
 
     // socket.on('edit-save', (data) => {
     // })
-    // socket.on('edit-leave', (data) => {
-    // })
+    socket.on('edit-leave', ({ roomName, filename }) => {
+        const fileKey = `${roomName}-${filename}`
+        const session = fileEditMap.get(fileKey);
+        if (session) {
+            const userCount = session.users - 1
+            if (userCount <= 0) {
+                console.log("Everyone left, deleting quill delta...")
+                fileEditMap.delete(fileKey)
+            } else {
+                fileEditMap.set(fileKey, { delta: session.delta, users: session.users - 1 });
+            }
+        }
+    })
 
     socket.on('disconnect', () => {
         console.log("A client has disconnected")

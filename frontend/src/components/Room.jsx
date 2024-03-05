@@ -127,6 +127,7 @@ const Room = ({ socket }) => {
   };
 
   const closeEditor = () => {
+    socket.emit("edit-leave", { roomName, filename: editorOnFile });
     setEditorOnFile(undefined);
   };
 

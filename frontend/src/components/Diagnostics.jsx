@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Typography } from "@mui/material";
 
-
-
 const Diagnostics = ({socket}) => {
 
   const [ping, setPing] = useState(0);

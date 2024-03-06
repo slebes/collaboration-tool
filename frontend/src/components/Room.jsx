@@ -51,7 +51,7 @@ const Room = ({ socket }) => {
     });
     socket.on("delete-room", () => {
       toast.error(`The room \"${roomName}\" was deleted.`);
-      navigate("/lobby", { state: { username } });
+      navigate("/app/lobby", { state: { username } });
     });
     return () => {
       socket.off("message");

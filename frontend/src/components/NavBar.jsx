@@ -35,7 +35,7 @@ const NavBar = ({ socket }) => {
 
   const handleJoinRoom = (roomName) => {
     console.log("join room");
-    navigate(`/room/${roomName}`, { state: { username, roomName } });
+    navigate(`/app/room/${roomName}`, { state: { username, roomName } });
   };
 
   return (

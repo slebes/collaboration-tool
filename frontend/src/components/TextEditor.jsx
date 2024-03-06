@@ -24,11 +24,11 @@ function TextEditor({initialValue, socket, closeEditor, filename, downloadFile, 
   // Create soccet connection
   useEffect(() => {
     // Listen to edit events
-    socket.on("edit", (delta) => {
+    socket.on(`edit-${filename}`, (delta) => {
       setValue((oldValue) => oldValue.compose(delta));
     });
     return () => {
-      socket.off("edit");
+      socket.off(`edit-${filename}`);
     };
   }, [socket, filename, roomName, initialValue]);
 

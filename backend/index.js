@@ -124,7 +124,7 @@ io.on('connection', (socket) => {
         if (old) {
             const newDelta = old.delta.compose(delta)
             fileEditMap.set(fileKey, { delta: newDelta, users: old.users });
-            socket.broadcast.emit('edit', delta);
+            socket.broadcast.to(roomName).emit(`edit-${filename}`, delta);
         } else {
             console.log("Error editing file. No delta exists for file!");
         }

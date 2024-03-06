@@ -157,6 +157,12 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on('throughput-upload', ({rawData}, cb) => {
+        console.log("Testing upload througput", rawData)
+        const end = Date.now()
+        cb(end)
+    })
+
     socket.on('ping', (cb) => {
         cb();
     })
@@ -187,6 +193,13 @@ app.get('/room/:roomName/:filename', (req, res) => {
         console.log(e)
         res.status(500)
     }
+})
+
+app.get('/test-download', (req, res) => {
+    // Send 1MB junk data to calculate download speed
+    const rawData = Buffer.alloc(1024 * 1024)
+    console.log("Testing download throughput:", rawData)
+    res.send(rawData)
 })
 
 httpsServer.listen(port, () => {

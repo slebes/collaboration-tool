@@ -82,12 +82,19 @@ io.on('connection', (socket) => {
     })
 
     socket.on('delete-room', ({ roomName }) => {
-        //TODO: clear edit sessions
+
         console.log(`Deleting room: ${roomName}`);
         let data = db.dataToJson()
         delete data[roomName]
         db.writeToFile(data)
         db.deleteRoomData(roomName)
+        // Remove ongoing edit sessions
+        fileEditMap.forEach((value, key) => {
+            if (key.startsWith(`${roomName}-`)) {
+                console.log("Removing edit session:", key)
+                fileEditMap.delete(key)
+            }
+        })
         // Signal to everyone that the room has been deleted
         // Kick them out (do it on the frontend side)
         io.to(roomName).emit('delete-room')

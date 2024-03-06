@@ -13,13 +13,13 @@ const UsernameDialog = () => {
     const handleClick = (e) => {
         e.preventDefault();
         // Change site to "Lobby"
-        navigate("/lobby", { state: { username: value }})
+        navigate("/app/lobby", { state: { username: value }})
     }
 
     const handlePress = (event) => {
       if(event.key === 'Enter') {
           console.log("Enter pressed")
-          navigate("/lobby", { state: { username: value }})
+          navigate("/app/lobby", { state: { username: value }})
       } 
     }
 

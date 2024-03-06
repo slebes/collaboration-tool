@@ -150,6 +150,10 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on('ping', (cb) => {
+        cb();
+    })
+
     socket.on('disconnect', () => {
         console.log("A client has disconnected")
         // Remove user from room and edit sessions on disconnect

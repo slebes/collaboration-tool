@@ -21,15 +21,15 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: "/",
+    path: "/app",
     element: <NavBar socket={socket} />,
     children: [
       {
-        path: "/lobby",
+        path: "/app/lobby",
         element: <Lobby socket={socket} />,
       },
       {
-        path: "/room/*",
+        path: "/app/room/*",
         element: <Room socket={socket} />,
       },
     ],

@@ -3,6 +3,7 @@ import CreateRoomForm from "./CreateRoomForm";
 import RoomList from "./RoomList";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Grid } from "@mui/material";
+import Diagnostics from "./Diagnostics";
 
 const NavBar = ({ socket }) => {
   const [roomList, setRoomList] = useState([]);
@@ -49,6 +50,7 @@ const NavBar = ({ socket }) => {
             paddingTop: "30px !important",
           }}
         >
+          <Diagnostics socket={socket}/>
           <CreateRoomForm handleCreateRoom={handleJoinRoom}></CreateRoomForm>
           <RoomList
             roomList={roomList}

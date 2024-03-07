@@ -110,14 +110,14 @@ io.on('connection', (socket) => {
             const fileKey = `${roomName}-${filename}`
             if (fileEditMap.has(fileKey)) {
                 const oldEdit = fileEditMap.get(fileKey)
-                const newEdit = { delta: oldEdit.delta, users: [...oldEdit.users, {socket: socket.id, username: username}]}
+                const newEdit = { delta: oldEdit.delta, users: [...oldEdit.users, { socket: socket.id, username: username }] }
                 fileEditMap.set(fileKey, newEdit);
                 cb(newEdit.delta);
             } else {
                 console.log("Creating a map", fileKey)
                 const data = fs.readFileSync(`./data/${roomName}/${filename}`)
                 const fileEdits = new Delta([{ "insert": data.toString() }])
-                fileEditMap.set(fileKey, { delta: fileEdits, users: [{socket: socket.id, username: username}] })
+                fileEditMap.set(fileKey, { delta: fileEdits, users: [{ socket: socket.id, username: username }] })
                 cb(fileEdits)
             }
         } catch (e) {
@@ -152,12 +152,12 @@ io.on('connection', (socket) => {
                 fileEditMap.delete(fileKey)
             } else {
                 const updatedUserList = session.users.filter(user => user.socket !== socket.id)
-                fileEditMap.set(fileKey, { delta: session.delta, users: updatedUserList});
+                fileEditMap.set(fileKey, { delta: session.delta, users: updatedUserList });
             }
         }
     })
 
-    socket.on('throughput-upload', ({rawData}, cb) => {
+    socket.on('throughput-upload', ({ rawData }, cb) => {
         console.log("Testing upload througput", rawData)
         const end = Date.now()
         cb(end)
@@ -165,6 +165,14 @@ io.on('connection', (socket) => {
 
     socket.on('ping', (cb) => {
         cb();
+    })
+
+    socket.on("ask-ping", (clientData) => {
+        socket.broadcast.to(clientData.roomName).emit("ask-ping", { ...clientData, socketId: socket.id })
+    })
+
+    socket.on("get-ping", (clientData) => {
+        io.to(clientData.socketId).emit("get-ping", clientData)
     })
 
     socket.on('disconnect', () => {

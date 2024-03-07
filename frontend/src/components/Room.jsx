@@ -14,7 +14,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import toast from "react-hot-toast";
 import TextEditor from "./TextEditor";
-import Delta from "quill-delta"
+import Delta from "quill-delta";
 
 const Room = ({ socket }) => {
   const [newMessage, setNewMessage] = useState("");
@@ -53,26 +53,55 @@ const Room = ({ socket }) => {
       toast.error(`The room \"${roomName}\" was deleted.`);
       navigate("/app/lobby", { state: { username } });
     });
+
+    const pingInterval = setInterval(() => {
+      socket.emit("ask-ping", { ping: Date.now(), roomName });
+    }, 2000);
+
+    // Where to send, what was the original timestamp, who did we ping
+    // {socketId, ping, username}
+    // Almost like a callback but now server
+    // can deal with all "callbacks" separately
+    socket.on("ask-ping", (data) => {
+      socket.emit("get-ping", { ...data, username });
+    });
+
+    socket.on("get-ping", (data) => {
+      console.log("What is the ping?");
+      console.log(Date.now() - data.ping);
+      // const updatedPings = users.map((u) => {
+      //   if (u.username === data.username) {
+      //     return { ...u, ping: Date.now() - data.ping };
+      //   } else {
+      //     return u;
+      //   }
+      // });
+      // setUsers(updatedPings);
+    });
     return () => {
       socket.off("message");
       socket.off("file-upload");
       socket.off("join");
       socket.off("delete-room");
+      clearInterval(pingInterval);
     };
   }, [navigate, roomName, socket, username]);
 
   useEffect(() => {
     elementRef?.current?.scrollIntoView();
   }, [msgs]);
-  
+
   // Emit edit-leave when changing room mid edit
   useEffect(() => {
-    if(editorOnFile && editorOnFile.roomName !== roomName) {
-      console.log("leave")
-      socket.emit("edit-leave", { roomName: editorOnFile.roomName, filename: editorOnFile.filename });
+    if (editorOnFile && editorOnFile.roomName !== roomName) {
+      console.log("leave");
+      socket.emit("edit-leave", {
+        roomName: editorOnFile.roomName,
+        filename: editorOnFile.filename,
+      });
       setEditorOnFile(undefined);
     }
-  }, [editorOnFile, roomName, socket])
+  }, [editorOnFile, roomName, socket]);
 
   const handleSendMessage = () => {
     const data = {
@@ -112,7 +141,11 @@ const Room = ({ socket }) => {
     // https://stackoverflow.com/questions/73410132/how-to-download-a-file-using-reactjs-with-axios-in-the-frontend-and-fastapi-in-t
     if (filename.endsWith(".txt")) {
       socket.emit("edit-start", { filename, roomName }, (fileEdits) => {
-        setEditorOnFile({roomName, filename: filename, initialValue: new Delta(fileEdits)});
+        setEditorOnFile({
+          roomName,
+          filename: filename,
+          initialValue: new Delta(fileEdits),
+        });
       });
     } else {
       await downloadFile(filename);
@@ -142,9 +175,8 @@ const Room = ({ socket }) => {
     <div style={{ position: "relative" }}>
       <Typography variant="h1">{roomName}</Typography>
 
-      {editorOnFile 
-      ? (
-      <Box>
+      {editorOnFile ? (
+        <Box>
           <TextEditor
             initialValue={editorOnFile.initialValue}
             socket={socket}
@@ -153,93 +185,100 @@ const Room = ({ socket }) => {
             downloadFile={downloadFile}
             roomName={editorOnFile.roomName}
           />
-      </Box>
-      )
-      :<>
-      <Grid container>
-        <Card>
-          <Typography
-            variant="h6"
-            sx={{
-              paddingLeft: "5px",
-              paddingRight: "5px",
-              borderBottom: "1px solid black",
-            }}
-          >
-            Messages:
-          </Typography>
-          <Box style={{ maxHeight: "80VH", height: "75VH", overflow: "auto" }}>
-            <List>
-              {msgs.map((message, id) => {
-                return (
-                  <ListItem key={message + " " + id}>
-                    <ListItemText
-                      primary={message.username + ": " + message.message}
-                    />
-                  </ListItem>
-                );
-              })}
-            </List>
-            <div className="MessagesList" ref={elementRef}></div>
-          </Box>
-          <TextField
-            value={newMessage}
-            onChange={({ target }) => setNewMessage(target.value)}
-            onKeyDown={handlePress}
-          />
-        </Card>
-        <Card sx={{ textAlign: "center" }}>
-          <Typography
-            variant="h6"
-            sx={{
-              paddingLeft: "5px",
-              paddingRight: "5px",
-              borderBottom: "1px solid black",
-            }}
-          >
-            Files:
-          </Typography>
-          <List style={{ maxHeight: "80VH", height: "75VH", overflow: "auto" }}>
-            {files.map((filename, id) => {
-              return (
-                <ListItem key={filename + " " + id}>
-                  <ListItemButton
-                    onClick={(e) => handleFileLinkClick(e, filename)}
-                  >
-                    <ListItemText primary={filename} />
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
-          </List>
-          <Button variant="contained" component="label">
-            Upload File <input onChange={handleFileChange} type="file" hidden />
-          </Button>
-        </Card>
-        <Card>
-          <Typography
-            variant="h6"
-            sx={{
-              paddingLeft: "5px",
-              paddingRight: "5px",
-              borderBottom: "1px solid black",
-            }}
-          >
-            Active users:
-          </Typography>
-          <List style={{ maxHeight: "80VH", height: "75VH", overflow: "auto" }}>
-            {users.map((username, id) => {
-              return (
-                <ListItem key={username + " " + id}>
-                  <ListItemText primary={username} />
-                </ListItem>
-              );
-            })}
-          </List>
-        </Card>
-      </Grid>
-      </>
-      }
+        </Box>
+      ) : (
+        <>
+          <Grid container>
+            <Card>
+              <Typography
+                variant="h6"
+                sx={{
+                  paddingLeft: "5px",
+                  paddingRight: "5px",
+                  borderBottom: "1px solid black",
+                }}
+              >
+                Messages:
+              </Typography>
+              <Box
+                style={{ maxHeight: "80VH", height: "75VH", overflow: "auto" }}
+              >
+                <List>
+                  {msgs.map((message, id) => {
+                    return (
+                      <ListItem key={message + " " + id}>
+                        <ListItemText
+                          primary={message.username + ": " + message.message}
+                        />
+                      </ListItem>
+                    );
+                  })}
+                </List>
+                <div className="MessagesList" ref={elementRef}></div>
+              </Box>
+              <TextField
+                value={newMessage}
+                onChange={({ target }) => setNewMessage(target.value)}
+                onKeyDown={handlePress}
+              />
+            </Card>
+            <Card sx={{ textAlign: "center" }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  paddingLeft: "5px",
+                  paddingRight: "5px",
+                  borderBottom: "1px solid black",
+                }}
+              >
+                Files:
+              </Typography>
+              <List
+                style={{ maxHeight: "80VH", height: "75VH", overflow: "auto" }}
+              >
+                {files.map((filename, id) => {
+                  return (
+                    <ListItem key={filename + " " + id}>
+                      <ListItemButton
+                        onClick={(e) => handleFileLinkClick(e, filename)}
+                      >
+                        <ListItemText primary={filename} />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+              <Button variant="contained" component="label">
+                Upload File{" "}
+                <input onChange={handleFileChange} type="file" hidden />
+              </Button>
+            </Card>
+            <Card>
+              <Typography
+                variant="h6"
+                sx={{
+                  paddingLeft: "5px",
+                  paddingRight: "5px",
+                  borderBottom: "1px solid black",
+                }}
+              >
+                Active users:
+              </Typography>
+              <List
+                style={{ maxHeight: "80VH", height: "75VH", overflow: "auto" }}
+              >
+                {users.map((username, id) => {
+                  return (
+                    <ListItem key={username + " " + id}>
+                      <ListItemText primary={username} />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            </Card>
+          </Grid>
+        </>
+      )}
     </div>
   );
 };

@@ -11,7 +11,7 @@ import {
   Grid,
 } from "@mui/material";
 import { useEffect, useState, useRef } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import TextEditor from "./TextEditor";
 import Delta from "quill-delta";
@@ -47,10 +47,10 @@ const Room = ({ socket }) => {
       setFiles((oldData) => [...oldData, filename]);
     });
     socket.on("join", (data) => {
-      setUsers(data);
+      setUsers(data.map((u) => ({ username: u, ping: 0 })));
     });
     socket.on("delete-room", () => {
-      toast.error(`The room \"${roomName}\" was deleted.`);
+      toast.error(`The room "${roomName}" was deleted.`);
       navigate("/app/lobby", { state: { username } });
     });
 
@@ -67,16 +67,15 @@ const Room = ({ socket }) => {
     });
 
     socket.on("get-ping", (data) => {
-      console.log("What is the ping?");
-      console.log(Date.now() - data.ping);
-      // const updatedPings = users.map((u) => {
-      //   if (u.username === data.username) {
-      //     return { ...u, ping: Date.now() - data.ping };
-      //   } else {
-      //     return u;
-      //   }
-      // });
-      // setUsers(updatedPings);
+      setUsers((us) => {
+        return us.map((u) => {
+          if (u.username === data.username) {
+            return { ...u, ping: Date.now() - data.ping };
+          } else {
+            return u;
+          }
+        });
+      });
     });
     return () => {
       socket.off("message");
@@ -128,7 +127,7 @@ const Room = ({ socket }) => {
         rawData: selectedFile,
       };
       // TODO: Maybe add some confiramtion for errors.
-      socket.emit("file-upload", data, (data) => {
+      socket.emit("file-upload", data, () => {
         toast.error("File upload failed.");
       });
 
@@ -267,10 +266,14 @@ const Room = ({ socket }) => {
               <List
                 style={{ maxHeight: "80VH", height: "75VH", overflow: "auto" }}
               >
-                {users.map((username, id) => {
+                {users.map((user, id) => {
+                  const nameToShow =
+                    user.username === username
+                      ? user.username
+                      : user.username + " " + user.ping + "ms";
                   return (
-                    <ListItem key={username + " " + id}>
-                      <ListItemText primary={username} />
+                    <ListItem key={user.username + " " + id}>
+                      <ListItemText primary={nameToShow} />
                     </ListItem>
                   );
                 })}

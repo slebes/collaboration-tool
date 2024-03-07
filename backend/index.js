@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('file-upload', ({ name, size, rawData }, cb) => {
-        const [defaultRoom, currentRoom] = socket.rooms
+        const [, currentRoom] = socket.rooms
         try {
             const savedFilename = db.saveFile(currentRoom, name, size, rawData)
             io.to(currentRoom).emit('file-upload', { roomName: currentRoom, filename: savedFilename })
@@ -205,6 +205,7 @@ app.get('/room/:roomName/:filename', (req, res) => {
 
 app.get('/test-download', (req, res) => {
     // Send 1MB junk data to calculate download speed
+    // eslint-disable-next-line no-undef
     const rawData = Buffer.alloc(1024 * 1024)
     console.log("Testing download throughput:", rawData)
     res.send(rawData)

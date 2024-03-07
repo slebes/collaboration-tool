@@ -1,4 +1,3 @@
-import {useState } from 'react'
 import UserNameDialog from './components/UsernameDialog'
 
 const App = () => {

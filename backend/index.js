@@ -35,6 +35,7 @@ app.use(cors())
 // Check Selection of the username: https://socket.io/get-started/private-messaging-part-1/
 const roomUserMap = new Map(Object.keys(db.dataToJson()).map((key) => [key, []]))
 const fileEditMap = new Map()
+const pingMap = new Map()
 
 io.on('connection', (socket) => {
     const data = db.dataToJson()
@@ -163,16 +164,22 @@ io.on('connection', (socket) => {
         cb(end)
     })
 
-    socket.on('ping', (cb) => {
-        cb();
+    socket.on('ping', ({ prevPing, username }, cb) => {
+        cb()
+        pingMap.set(socket.id, {username: username, ping: prevPing});
     })
 
-    socket.on("ask-ping", (clientData) => {
-        socket.broadcast.to(clientData.roomName).emit("ask-ping", { ...clientData, socketId: socket.id })
-    })
-
-    socket.on("get-ping", (clientData) => {
-        io.to(clientData.socketId).emit("get-ping", clientData)
+    socket.on("ask-ping", ({roomName}, cb) => {
+        const myPing = pingMap.get(socket.id)
+        const roomPings = roomUserMap.get(roomName).map((userobj) => {
+            if(userobj.socket !== socket.id) {
+                const data = pingMap.get(userobj.socket)
+                return (
+                    {username: data.username, ping:(data.ping+myPing.ping)}
+                )
+            }
+        }).filter(u => u)
+        cb(roomPings)
     })
 
     socket.on('disconnect', () => {
@@ -183,6 +190,7 @@ io.on('connection', (socket) => {
         const fileKey = utils.findBySocket(fileEditUserMap, socket.id)
         if (previousRoom) utils.removeFromRoom(previousRoom, roomUserMap, socket, io)
         if (fileKey) utils.removeFromEditSession(fileKey, fileEditMap, socket)
+        pingMap.delete(socket.id)
     })
 })
 

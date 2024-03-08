@@ -50,7 +50,7 @@ const NavBar = ({ socket }) => {
             paddingTop: "30px !important",
           }}
         >
-          <Diagnostics socket={socket}/>
+          <Diagnostics socket={socket} username={username}/>
           <CreateRoomForm handleCreateRoom={handleJoinRoom}></CreateRoomForm>
           <RoomList
             roomList={roomList}

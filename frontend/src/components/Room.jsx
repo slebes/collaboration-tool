@@ -28,6 +28,13 @@ const Room = ({ socket }) => {
 
   const { username, roomName } = location.state ? location.state : {};
 
+  const pingRoom = () => {
+    socket.emit("ask-ping", { roomName }, (data) => {
+      console.log(data);
+      setUsers([...data, { username, ping: 0 }]);
+    });
+  }
+
   useEffect(() => {
     // Make sure the state is received
     if (!username || !roomName) {
@@ -37,6 +44,7 @@ const Room = ({ socket }) => {
     socket.emit("join", { username, roomName }, (data) => {
       setMsgs(data.messages);
       setFiles(data.files);
+      pingRoom();
     });
     socket.on("message", (data) => {
       const { message, username } = data;
@@ -55,28 +63,9 @@ const Room = ({ socket }) => {
     });
 
     const pingInterval = setInterval(() => {
-      socket.emit("ask-ping", { ping: Date.now(), roomName });
-    }, 2000);
+      pingRoom();
+    }, 10000);
 
-    // Where to send, what was the original timestamp, who did we ping
-    // {socketId, ping, username}
-    // Almost like a callback but now server
-    // can deal with all "callbacks" separately
-    socket.on("ask-ping", (data) => {
-      socket.emit("get-ping", { ...data, username });
-    });
-
-    socket.on("get-ping", (data) => {
-      setUsers((us) => {
-        return us.map((u) => {
-          if (u.username === data.username) {
-            return { ...u, ping: Date.now() - data.ping };
-          } else {
-            return u;
-          }
-        });
-      });
-    });
     return () => {
       socket.off("message");
       socket.off("file-upload");
@@ -89,6 +78,10 @@ const Room = ({ socket }) => {
   useEffect(() => {
     elementRef?.current?.scrollIntoView();
   }, [msgs]);
+
+  useEffect(() => {
+    pingRoom();
+  }, []);
 
   // Emit edit-leave when changing room mid edit
   useEffect(() => {

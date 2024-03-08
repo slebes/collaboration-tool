@@ -1,20 +1,32 @@
 import { useEffect, useState } from "react";
 import { Button, Typography, Grid, Card } from "@mui/material";
 
-const Diagnostics = ({socket}) => {
+const Diagnostics = ({socket, username}) => {
 
   const [ping, setPing] = useState(0);
+  const [dummy, setDummy] = useState(true);
   const [uploadSpeed, setUploadSpeed] = useState(null);
   const [downloadSpeed, setDownloadSpeed] = useState(null);
 
   const pingServer = () => {
     const start = Date.now();
-  
-    socket.emit("ping", () => {
-      const duration = Date.now() - start;
-      setPing(duration);
+    
+    socket.emit("ping", {prevPing: ping, username: username}, () => {
+      const end = Date.now();
+      setPing(end-start)
+      setDummy(!dummy);
     });
   }
+
+  // const pingServer = useCallback(() => {
+  //   console.log("pinging");
+  //   const start = Date.now();
+    
+  //   socket.emit("ping", {prevPing: ping}, () => {
+  //     const end = Date.now();
+  //     setPing(end-start)
+  //   });
+  // }, [ping])
 
   const testUploadThroughput = () => {
     // Upload 1MB junk data to calculate upload speed
@@ -42,9 +54,21 @@ const Diagnostics = ({socket}) => {
   }
 
   useEffect(() => {
-    setInterval(() => {
+    setTimeout(() => {
       pingServer()
     }, 2000);
+
+    // const pingInterval = setInterval(() => {
+    //   pingServer();
+    // }, 2000);
+    // return () => {
+    //   clearInterval(pingInterval);
+    // }
+  }, [dummy])
+
+  useEffect(() => {
+    pingServer();
+    pingServer();
   }, [])
 
   return (

@@ -35,6 +35,7 @@ app.use(cors())
 // Check Selection of the username: https://socket.io/get-started/private-messaging-part-1/
 const roomUserMap = new Map(Object.keys(db.dataToJson()).map((key) => [key, []]))
 const fileEditMap = new Map()
+const pingMap = new Map()
 
 io.on('connection', (socket) => {
     const data = db.dataToJson()
@@ -43,7 +44,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('file-upload', ({ name, size, rawData }, cb) => {
-        const [defaultRoom, currentRoom] = socket.rooms
+        const [, currentRoom] = socket.rooms
         try {
             const savedFilename = db.saveFile(currentRoom, name, size, rawData)
             io.to(currentRoom).emit('file-upload', { roomName: currentRoom, filename: savedFilename })
@@ -110,14 +111,14 @@ io.on('connection', (socket) => {
             const fileKey = `${roomName}-${filename}`
             if (fileEditMap.has(fileKey)) {
                 const oldEdit = fileEditMap.get(fileKey)
-                const newEdit = { delta: oldEdit.delta, users: [...oldEdit.users, {socket: socket.id, username: username}]}
+                const newEdit = { delta: oldEdit.delta, users: [...oldEdit.users, { socket: socket.id, username: username }] }
                 fileEditMap.set(fileKey, newEdit);
                 cb(newEdit.delta);
             } else {
                 console.log("Creating a map", fileKey)
                 const data = fs.readFileSync(`./data/${roomName}/${filename}`)
                 const fileEdits = new Delta([{ "insert": data.toString() }])
-                fileEditMap.set(fileKey, { delta: fileEdits, users: [{socket: socket.id, username: username}] })
+                fileEditMap.set(fileKey, { delta: fileEdits, users: [{ socket: socket.id, username: username }] })
                 cb(fileEdits)
             }
         } catch (e) {
@@ -152,19 +153,33 @@ io.on('connection', (socket) => {
                 fileEditMap.delete(fileKey)
             } else {
                 const updatedUserList = session.users.filter(user => user.socket !== socket.id)
-                fileEditMap.set(fileKey, { delta: session.delta, users: updatedUserList});
+                fileEditMap.set(fileKey, { delta: session.delta, users: updatedUserList });
             }
         }
     })
 
-    socket.on('throughput-upload', ({rawData}, cb) => {
+    socket.on('throughput-upload', ({ rawData }, cb) => {
         console.log("Testing upload througput", rawData)
         const end = Date.now()
         cb(end)
     })
 
-    socket.on('ping', (cb) => {
-        cb();
+    socket.on('ping', ({ prevPing, username }, cb) => {
+        cb()
+        pingMap.set(socket.id, {username: username, ping: prevPing});
+    })
+
+    socket.on("ask-ping", ({roomName}, cb) => {
+        const myPing = pingMap.get(socket.id)
+        const roomPings = roomUserMap.get(roomName).map((userobj) => {
+            if(userobj.socket !== socket.id) {
+                const data = pingMap.get(userobj.socket)
+                return (
+                    {username: data.username, ping:(data.ping+myPing.ping)}
+                )
+            }
+        }).filter(u => u)
+        cb(roomPings)
     })
 
     socket.on('disconnect', () => {
@@ -175,6 +190,7 @@ io.on('connection', (socket) => {
         const fileKey = utils.findBySocket(fileEditUserMap, socket.id)
         if (previousRoom) utils.removeFromRoom(previousRoom, roomUserMap, socket, io)
         if (fileKey) utils.removeFromEditSession(fileKey, fileEditMap, socket)
+        pingMap.delete(socket.id)
     })
 })
 
@@ -197,6 +213,7 @@ app.get('/room/:roomName/:filename', (req, res) => {
 
 app.get('/test-download', (req, res) => {
     // Send 1MB junk data to calculate download speed
+    // eslint-disable-next-line no-undef
     const rawData = Buffer.alloc(1024 * 1024)
     console.log("Testing download throughput:", rawData)
     res.send(rawData)

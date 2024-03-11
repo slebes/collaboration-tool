@@ -64,13 +64,11 @@ io.on('connection', (socket) => {
     socket.on('join', ({ username, roomName }, cb) => {
         let data = db.dataToJson();
         if (!(roomName in data)) {
-            console.log('Creating room: ', roomName)
             data[roomName] = { messages: [], files: [] }
             db.writeToFile(data)
             io.emit('room-list', Object.keys(data));
             roomUserMap.set(roomName, [])
         }
-        console.log('Joining room: ', roomName);
         if (socket.rooms.size > 1) utils.removeFromRoom(Array.from(socket.rooms)[1], roomUserMap, socket, io)
         socket.join(roomName);
 
@@ -84,7 +82,6 @@ io.on('connection', (socket) => {
 
     socket.on('delete-room', ({ roomName }) => {
 
-        console.log(`Deleting room: ${roomName}`);
         let data = db.dataToJson()
         delete data[roomName]
         db.writeToFile(data)
@@ -92,7 +89,6 @@ io.on('connection', (socket) => {
         // Remove ongoing edit sessions
         fileEditMap.forEach((value, key) => {
             if (key.startsWith(`${roomName}-`)) {
-                console.log("Removing edit session:", key)
                 fileEditMap.delete(key)
             }
         })
@@ -106,7 +102,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('edit-start', ({ roomName, filename, username }, cb) => {
-        console.log("Started editing " + roomName + " " + filename)
         try {
             const fileKey = `${roomName}-${filename}`
             if (fileEditMap.has(fileKey)) {
@@ -115,7 +110,6 @@ io.on('connection', (socket) => {
                 fileEditMap.set(fileKey, newEdit);
                 cb(newEdit.delta);
             } else {
-                console.log("Creating a map", fileKey)
                 const data = fs.readFileSync(`./data/${roomName}/${filename}`)
                 const fileEdits = new Delta([{ "insert": data.toString() }])
                 fileEditMap.set(fileKey, { delta: fileEdits, users: [{ socket: socket.id, username: username }] })
@@ -149,7 +143,6 @@ io.on('connection', (socket) => {
         if (session) {
             const userCount = session.users.length - 1
             if (userCount <= 0) {
-                console.log("Everyone left, deleting quill delta...")
                 fileEditMap.delete(fileKey)
             } else {
                 const updatedUserList = session.users.filter(user => user.socket !== socket.id)
@@ -159,9 +152,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('throughput-upload', ({ rawData }, cb) => {
-        console.log("Testing upload througput", rawData)
-        const end = Date.now()
-        cb(end)
+        cb()
     })
 
     socket.on('ping', ({ prevPing, username }, cb) => {
@@ -179,7 +170,7 @@ io.on('connection', (socket) => {
                 )
             }
         }).filter(u => u)
-        cb(roomPings)
+        cb({roomPings})
     })
 
     socket.on('disconnect', () => {
@@ -215,7 +206,6 @@ app.get('/test-download', (req, res) => {
     // Send 1MB junk data to calculate download speed
     // eslint-disable-next-line no-undef
     const rawData = Buffer.alloc(1024 * 1024)
-    console.log("Testing download throughput:", rawData)
     res.send(rawData)
 })
 

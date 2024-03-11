@@ -18,7 +18,6 @@ const UsernameDialog = () => {
 
     const handlePress = (event) => {
       if(event.key === 'Enter') {
-          console.log("Enter pressed")
           navigate("/app/lobby", { state: { username: value }})
       } 
     }

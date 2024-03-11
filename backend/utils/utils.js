@@ -9,14 +9,11 @@ const removeFromRoom = (room, roomUserMap, socket, io) => {
 }
 
 const removeFromEditSession = (fileKey, fileEditMap, socket) => {
-    // Remove user from map
-    console.log("Removing from edit session")
 
     const sessionObject = fileEditMap.get(fileKey)
     const updatedUserList = sessionObject.users.filter(object => object.socket !== socket.id)
     const userCount = updatedUserList.length
     if (userCount <= 0) {
-        console.log("Everyone left, deleting quill delta...")
         fileEditMap.delete(fileKey)
     } else {
         fileEditMap.set(fileKey, {delta: sessionObject.delta, users: updatedUserList})

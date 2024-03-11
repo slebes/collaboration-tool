@@ -40,7 +40,6 @@ function TextEditor({initialValue, socket, closeEditor, filename, downloadFile, 
   };
 
   const saveFile = () => {
-    console.log(value);
     const text = quillRef.current.getEditor().getText();
     socket.emit("edit-save", { roomName, filename, value: text });
     // implement quill saving here

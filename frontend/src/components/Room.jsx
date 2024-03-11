@@ -30,7 +30,6 @@ const Room = ({ socket }) => {
 
   const pingRoom = () => {
     socket.emit("ask-ping", { roomName }, ({roomPings}) => {
-      console.log(roomPings);
       setUsers([...roomPings, { username, ping: 0 }]);
     });
   }
@@ -86,7 +85,6 @@ const Room = ({ socket }) => {
   // Emit edit-leave when changing room mid edit
   useEffect(() => {
     if (editorOnFile && editorOnFile.roomName !== roomName) {
-      console.log("leave");
       socket.emit("edit-leave", {
         roomName: editorOnFile.roomName,
         filename: editorOnFile.filename,

@@ -18,23 +18,14 @@ const Diagnostics = ({socket, username}) => {
     });
   }
 
-  // const pingServer = useCallback(() => {
-  //   console.log("pinging");
-  //   const start = Date.now();
-    
-  //   socket.emit("ping", {prevPing: ping}, () => {
-  //     const end = Date.now();
-  //     setPing(end-start)
-  //   });
-  // }, [ping])
-
   const testUploadThroughput = () => {
     // Upload 1MB junk data to calculate upload speed
     const dataSize = 8 * 1024 * 1024
     const rawData = new Blob([new ArrayBuffer(dataSize)], {type: 'application/octet-stream'})
 
     const start = Date.now()
-    socket.emit("throughput-upload", {rawData}, (end) => {
+    socket.emit("throughput-upload", {rawData}, () => {
+      const end = Date.now()
       const uploadTimeSeconds = (end - start)  / 1000
       const uploadSpeed = (1 / uploadTimeSeconds).toFixed(2)
       setUploadSpeed(uploadSpeed)
@@ -47,7 +38,6 @@ const Diagnostics = ({socket, username}) => {
       `https://localhost:4000/test-download`
     );
     const end = Date.now()
-    console.log("Downloaded:", response)
     const downloadTimeSeconds = (end- start) / 1000
     const downloadSpeed = (1 / downloadTimeSeconds).toFixed(2)
     setDownloadSpeed(downloadSpeed)

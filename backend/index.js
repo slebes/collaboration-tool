@@ -179,7 +179,7 @@ io.on('connection', (socket) => {
                 )
             }
         }).filter(u => u)
-        cb(roomPings)
+        cb({roomPings})
     })
 
     socket.on('disconnect', () => {

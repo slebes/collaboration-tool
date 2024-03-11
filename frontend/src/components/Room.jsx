@@ -29,9 +29,9 @@ const Room = ({ socket }) => {
   const { username, roomName } = location.state ? location.state : {};
 
   const pingRoom = () => {
-    socket.emit("ask-ping", { roomName }, (data) => {
-      console.log(data);
-      setUsers([...data, { username, ping: 0 }]);
+    socket.emit("ask-ping", { roomName }, ({roomPings}) => {
+      console.log(roomPings);
+      setUsers([...roomPings, { username, ping: 0 }]);
     });
   }
 

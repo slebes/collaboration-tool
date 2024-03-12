@@ -40,7 +40,10 @@ const pingMap = new Map()
 io.on('connection', (socket) => {
     const data = db.dataToJson()
     socket.on('room-list', () => {
-        socket.emit('room-list', Object.keys(data));
+        const roomListObject = {
+            rooms: Object.keys(data)
+        }
+        socket.emit('room-list', roomListObject);
     })
 
     socket.on('file-upload', ({ name, size, rawData }, cb) => {
@@ -66,7 +69,10 @@ io.on('connection', (socket) => {
         if (!(roomName in data)) {
             data[roomName] = { messages: [], files: [] }
             db.writeToFile(data)
-            io.emit('room-list', Object.keys(data));
+            const roomListObject = {
+                rooms: Object.keys(data)
+            }
+            socket.emit('room-list', roomListObject);
             roomUserMap.set(roomName, [])
         }
         if (socket.rooms.size > 1) utils.removeFromRoom(Array.from(socket.rooms)[1], roomUserMap, socket, io)
@@ -75,7 +81,13 @@ io.on('connection', (socket) => {
         // Emit userList when user joins
         const updatedUserlist = [...roomUserMap.get(roomName), { socket: socket.id, username }]
         roomUserMap.set(roomName, updatedUserlist)
-        io.to(roomName).emit("join", updatedUserlist.map(object => object.username))
+
+        const userListObject = {
+            users: updatedUserlist.map(object => object.username)
+        }
+
+        io.to(roomName).emit("join", userListObject)
+        console.log(data[roomName])
 
         cb(data[roomName]);
     })
@@ -98,7 +110,10 @@ io.on('connection', (socket) => {
         io.in(roomName).socketsLeave(roomName);
         roomUserMap.delete(roomName)
         // Emit the new updated room list.
-        io.emit('room-list', Object.keys(data));
+        const roomListObject = {
+            rooms: Object.keys(data)
+        }
+        socket.emit('room-list', roomListObject);
     })
 
     socket.on('edit-start', ({ roomName, filename, username }, cb) => {

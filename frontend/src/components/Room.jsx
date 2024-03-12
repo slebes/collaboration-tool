@@ -54,7 +54,8 @@ const Room = ({ socket }) => {
       setFiles((oldData) => [...oldData, filename]);
     });
     socket.on("join", (data) => {
-      setUsers(data.map((u) => ({ username: u, ping: 0 })));
+      const users = data.users
+      setUsers(users.map((u) => ({ username: u, ping: 0 })));
     });
     socket.on("delete-room", () => {
       toast.error(`The room "${roomName}" was deleted.`);

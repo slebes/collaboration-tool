@@ -20,7 +20,7 @@ const NavBar = ({ socket }) => {
     }
 
     socket.on("room-list", (data) => {
-      setRoomList(data);
+      setRoomList(data.rooms);
     });
 
     return () => {
